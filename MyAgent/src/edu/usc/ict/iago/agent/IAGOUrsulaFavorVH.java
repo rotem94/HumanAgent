@@ -21,18 +21,16 @@ public class IAGOUrsulaFavorVH extends IAGOCoreVH {
 	 */
 	public IAGOUrsulaFavorVH(String name, GameSpec game, Session session)
 	{
-		super("UrsulaFavor", game, session, new RepeatedFavorBehavior(RepeatedFavorBehavior.LedgerBehavior.LIMITED), new RepeatedFavorExpression(), 
+		super("Rotem", game, session, new RepeatedFavorBehavior(RepeatedFavorBehavior.LedgerBehavior.LIMITED), new RepeatedFavorExpression(), 
 				new RepeatedFavorMessage(false, false, RepeatedFavorBehavior.LedgerBehavior.LIMITED, game));	
 		
 		super.safeForMultiAgent = true;
 	}
 
-	@Override
 	public String getArtName() {
 		return "Rens";
 	}
 
-	@Override
 	public String agentDescription() {
 			return "<h1>Opponent</h1><p>They are excited to begin negotiating!</p>";
 	}

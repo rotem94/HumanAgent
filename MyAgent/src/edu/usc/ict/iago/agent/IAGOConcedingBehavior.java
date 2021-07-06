@@ -17,25 +17,25 @@ public class IAGOConcedingBehavior extends IAGOCoreBehavior implements BehaviorP
 	private Offer concession;
 	
 	@Override
-	protected void updateAllocated (Offer update)
+	public void updateAllocated (Offer update)
 	{
 		allocated = update;
 	}
 
 	@Override
-	protected Offer getAllocated ()
+	public Offer getAllocated ()
 	{
 		return allocated;
 	}
 
 	@Override
-	protected Offer getConceded ()
+	public Offer getConceded ()
 	{
 		return concession;
 	}
 
 	@Override
-	protected void setUtils(AgentUtilsExtension utils)
+	public void setUtils(AgentUtilsExtension utils)
 	{
 		this.utils = utils;
 		
@@ -55,7 +55,7 @@ public class IAGOConcedingBehavior extends IAGOCoreBehavior implements BehaviorP
 	}
 
 	@Override
-	protected Offer getFinalOffer(History history)
+	public Offer getFinalOffer(History history)
 	{		
 		//start from where we currently have conceded
 		Offer propose = new Offer(game.getNumberIssues());
@@ -87,12 +87,12 @@ public class IAGOConcedingBehavior extends IAGOCoreBehavior implements BehaviorP
 	}
 	
 	@Override
-	protected int getAcceptMargin() {
+	public int getAcceptMargin() {
 		return (int)(-1.5 * game.getNumberIssues());
 	}
 
 	@Override
-	protected Offer getTimingOffer(History history) {
+	public Offer getTimingOffer(History history) {
 		
 		//50% chance of doing nothing
 		double chance = Math.random();
@@ -155,7 +155,7 @@ public class IAGOConcedingBehavior extends IAGOCoreBehavior implements BehaviorP
 	}
 
 	@Override
-	protected Offer getAcceptOfferFollowup(History history) {
+	public Offer getAcceptOfferFollowup(History history) {
 		ArrayList<Integer> ordering = utils.getMyOrdering();
 		
 		//start from where we currently have conceded
@@ -193,7 +193,7 @@ public class IAGOConcedingBehavior extends IAGOCoreBehavior implements BehaviorP
 	}
 
 	@Override
-	protected Offer getFirstOffer(History history) {
+	public Offer getFirstOffer(History history) {
 		Offer propose = new Offer(game.getNumberIssues());
 		ArrayList<Integer> ordering = utils.getMyOrdering();
 		List<Integer> quants = game.getIssueQuantities();
@@ -209,7 +209,7 @@ public class IAGOConcedingBehavior extends IAGOCoreBehavior implements BehaviorP
 	}
 
 	@Override
-	protected Offer getRejectOfferFollowup(History history) {
+	public Offer getRejectOfferFollowup(History history) {
 		
 		//start from where we currently have conceded
 		Offer propose = new Offer(game.getNumberIssues());
@@ -241,7 +241,7 @@ public class IAGOConcedingBehavior extends IAGOCoreBehavior implements BehaviorP
 	}
 
 	@Override
-	protected void updateAdverseEvents(int change) {
+	public void updateAdverseEvents(int change) {
 		return;
 		
 	}

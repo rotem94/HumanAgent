@@ -6,17 +6,17 @@ import edu.usc.ict.iago.utils.History;
 
 public class RepeatedFavorExpression extends IAGOCoreExpression implements ExpressionPolicy{
 	
-	protected String getSemiFairEmotion()
+	public String getSemiFairEmotion()
 	{
 		return "happy";
 	}
 	
-	protected String getFairEmotion()
+	public String getFairEmotion()
 	{
 		return "happy";
 	}
 	
-	protected String getUnfairEmotion()
+	public String getUnfairEmotion()
 	{
 		return "sad";
 	}

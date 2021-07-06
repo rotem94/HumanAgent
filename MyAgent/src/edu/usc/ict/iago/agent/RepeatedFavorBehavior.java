@@ -30,7 +30,7 @@ public class RepeatedFavorBehavior extends IAGOCoreBehavior implements BehaviorP
 	}
 		
 	@Override
-	protected void setUtils(AgentUtilsExtension utils)
+	public void setUtils(AgentUtilsExtension utils)
 	{
 		this.utils = utils;
 		
@@ -44,32 +44,32 @@ public class RepeatedFavorBehavior extends IAGOCoreBehavior implements BehaviorP
 	}
 	
 	@Override
-	protected void updateAllocated (Offer update)
+	public void updateAllocated (Offer update)
 	{
 		allocated = update;
 	}
 	
 	@Override
-	protected void updateAdverseEvents (int change)
+	public void updateAdverseEvents (int change)
 	{
 		adverseEvents = Math.max(0, adverseEvents + change);
 	}
 	
 	
 	@Override
-	protected Offer getAllocated ()
+	public Offer getAllocated ()
 	{
 		return allocated;
 	}
 	
 	@Override
-	protected Offer getConceded ()
+	public Offer getConceded ()
 	{
 		return allocated;
 	}
 	
 	@Override
-	protected Offer getFinalOffer(History history)
+	public Offer getFinalOffer(History history)
 	{
 		Offer propose = new Offer(game.getNumberIssues());
 		int totalFree = 0;
@@ -197,27 +197,27 @@ public class RepeatedFavorBehavior extends IAGOCoreBehavior implements BehaviorP
 	}
 
 	@Override
-	protected Offer getTimingOffer(History history) {
+	public Offer getTimingOffer(History history) {
 		return null;
 	}
 
 	@Override
-	protected Offer getAcceptOfferFollowup(History history) {
+	public Offer getAcceptOfferFollowup(History history) {
 		return null;
 	}
 	
 	@Override
-	protected Offer getFirstOffer(History history) {
+	public Offer getFirstOffer(History history) {
 		return null;
 	}
 
 	@Override
-	protected int getAcceptMargin() {
+	public int getAcceptMargin() {
 		return Math.max(0, Math.min(game.getNumberIssues(), adverseEvents));//basic decaying will, starts with fair
 	}
 
 	@Override
-	protected Offer getRejectOfferFollowup(History history) {
+	public Offer getRejectOfferFollowup(History history) {
 		return null;
 	}
 	

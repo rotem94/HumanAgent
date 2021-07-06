@@ -16,17 +16,17 @@ public class IAGODefaultExpression extends IAGOCoreExpression implements Express
 	}
 
 	@Override
-	protected String getSemiFairEmotion() {
+	public String getSemiFairEmotion() {
 		return null;
 	}
 
 	@Override
-	protected String getFairEmotion() {
+	public String getFairEmotion() {
 		return null;
 	}
 
 	@Override
-	protected String getUnfairEmotion() {
+	public String getUnfairEmotion() {
 		return null;
 	}
 

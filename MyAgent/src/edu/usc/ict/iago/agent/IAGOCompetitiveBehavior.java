@@ -18,25 +18,25 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 	private Offer concession;
 	
 	@Override
-	protected void updateAllocated (Offer update)
+	public void updateAllocated (Offer update)
 	{
 		allocated = update;
 	}
 
 	@Override
-	protected Offer getAllocated ()
+	public Offer getAllocated ()
 	{
 		return allocated;
 	}
 
 	@Override
-	protected Offer getConceded ()
+	public Offer getConceded ()
 	{
 		return concession;
 	}
 
 	@Override
-	protected void setUtils(AgentUtilsExtension utils)
+	public void setUtils(AgentUtilsExtension utils)
 	{
 		this.utils = utils;
 		utils.competitive = true;
@@ -57,7 +57,7 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 	}
 	
 	@Override
-	protected Offer getFirstOffer(History history)
+	public Offer getFirstOffer(History history)
 	{
 		return getFirstOffer();
 	}
@@ -226,7 +226,7 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 	}
 	
 	@Override
-	protected Offer getTimingOffer(History history) 
+	public Offer getTimingOffer(History history) 
 	{
 		return this.getTimingOffer();
 	}
@@ -243,7 +243,7 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 	}
 
 	@Override
-	protected Offer getAcceptOfferFollowup(History history) 
+	public Offer getAcceptOfferFollowup(History history) 
 	{
 		return getAcceptOfferFollowup();
 	}
@@ -297,7 +297,7 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 	}
 
 	@Override
-	protected Offer getRejectOfferFollowup(History history)
+	public Offer getRejectOfferFollowup(History history)
 	{
 		return getRejectOfferFollowup();
 	}
@@ -339,7 +339,7 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 	}
 	
 	@Override
-	protected Offer getFinalOffer(History history)
+	public Offer getFinalOffer(History history)
 	{
 		return this.getFinalOffer();
 	}
@@ -377,7 +377,7 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 	}
 
 	@Override
-	protected int getAcceptMargin() {
+	public int getAcceptMargin() {
 		return (int)(-1.5 * game.getNumberIssues());
 	}
 	
@@ -386,7 +386,7 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 	 * @param o an offer to evaluate
 	 * @return a boolean, true if the offer provides the agent with at least a given percentage of the overall joint value 
 	 */
-	protected boolean acceptOffer(Offer o)
+	public boolean acceptOffer(Offer o)
 	{
 		double myValue, opponentValue, jointValue;
 		myValue = utils.myActualOfferValue(o);
@@ -400,7 +400,7 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 	/**
 	 * When the opponent sends a new BATNA value, the VH starts a new concession curve from the "top" of the graph.
 	 */
-	protected void resetConcessionCurve()
+	public void resetConcessionCurve()
 	{
 		concession = new Offer(game.getNumberIssues());
 		for(int i = 0; i < game.getNumberIssues(); i++)
@@ -421,7 +421,7 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 	}
 
 	@Override
-	protected void updateAdverseEvents(int change) {
+	public void updateAdverseEvents(int change) {
 		return;
 		
 	}

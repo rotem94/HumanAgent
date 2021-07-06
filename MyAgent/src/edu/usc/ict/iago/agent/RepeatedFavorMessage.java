@@ -66,7 +66,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 	private int agentID;
 	private GameSpec gs;
 
-	protected void setUtils(AgentUtilsExtension utils)
+	public void setUtils(AgentUtilsExtension utils)
 	{
 		this.utils = utils;
 		opponentBATNA = -1;
@@ -147,15 +147,15 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 		return "I don't know what face you just made!";
 	}
 
-	protected String getEndOfTimeResponse() {
+	public String getEndOfTimeResponse() {
 		return "We're almost out of time!  Accept this quickly!";
 	}
 
-	protected String getSemiFairResponse() {
+	public String getSemiFairResponse() {
 		return "Unfortunately, I cannot accept.  But that's getting close to being fair.";
 	}
 
-	protected String getContradictionResponse(String drop) {
+	public String getContradictionResponse(String drop) {
 		return "I'm sorry.  I must be misunderstanding.  Earlier, you said: " + drop + " Was that not correct?";
 	}
 
@@ -165,7 +165,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 	}
 	
 	@Override
-	protected Event getFavorBehavior(History history, GameSpec game, Event e)
+	public Event getFavorBehavior(History history, GameSpec game, Event e)
 	{
 		if (lb != LedgerBehavior.NONE && utils.isImportantGame())
 			return new Event(agentID, Event.EventClass.SEND_MESSAGE, Event.SubClass.FAVOR_REQUEST, 

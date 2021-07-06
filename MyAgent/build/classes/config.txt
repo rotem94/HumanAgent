@@ -3,13 +3,13 @@
 
 #NOTE: If agent0 is left blank, then the user will play against agent1.  If agent0 and agent1 are occupied, those two agents play against each other.
 agent0= 
-agent1= edu.usc.ict.iago.agent.IAGOUrsulaFavorVH
+agent1= edu.biu.myagent.MyAgent
 #NOTE: Gamespec specified which game will be loaded into the system.
-gamespec=edu.usc.ict.iago.views.ViralGameSpec
+gamespec=edu.usc.ict.iago.views.ViralGameSpec,edu.usc.ict.iago.views.ViralGameSpec
 
 #Turing Mode forces all messages to be preset (it disables sending hand-crafted messages) based on the SubClass
 
-turingMode = enabled
+turingMode = disabled
 
 
 #Sets the mail credentials for this servlet, which allows it to send email notifications.  Leaving blank is fine; will disable email config.

@@ -5,8 +5,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import edu.biu.myagent.MyCoreAgent;
 import edu.usc.ict.iago.utils.Event;
 import edu.usc.ict.iago.utils.GameSpec;
+import edu.usc.ict.iago.utils.GeneralVH;
 import edu.usc.ict.iago.utils.History;
 import edu.usc.ict.iago.utils.MathUtils;
 import edu.usc.ict.iago.utils.Offer;
@@ -14,9 +16,9 @@ import edu.usc.ict.iago.utils.Preference;
 import edu.usc.ict.iago.utils.ServletUtils;
 import edu.usc.ict.iago.utils.Preference.Relation;
 
-class AgentUtilsExtension 
+public class AgentUtilsExtension 
 {
-	private IAGOCoreVH agent;
+	private GeneralVH agent;
 	private GameSpec game;
 	private ArrayList<ArrayList<Integer>> orderings = new ArrayList<ArrayList<Integer>>();
 	private int[][] permutations;
@@ -34,7 +36,7 @@ class AgentUtilsExtension
 	 * Constructor for the AUE.
 	 * @param core The VH associated with this instance of AUE.
 	 */
-	AgentUtilsExtension(IAGOCoreVH core){
+	public AgentUtilsExtension(GeneralVH core){
 		this.agent = core;
 		
 		if (this.agent.getID() == History.USER_ID) 
@@ -52,7 +54,7 @@ class AgentUtilsExtension
 	 * Configures initial parameters for the given game.
 	 * @param game the game being played.
 	 */
-	protected void configureGame(GameSpec game)
+	public void configureGame(GameSpec game)
 	{
 		this.game = game;
 		permutations = MathUtils.getPermutations(game.getNumberIssues(), 1);//offset by 1, so we will be 1-indexed
@@ -64,7 +66,7 @@ class AgentUtilsExtension
 	 * Sets the agent belief for when multiple opponent orderings are equally likely.  When true, it assumes it has the same preferences.  When false, it does not.
 	 * @param fixedpie true if fixed pie belief is in effect, false otherwise (if method is not called, defaults to false)
 	 */
-	protected void setAgentBelief(boolean fixedpie)
+	public void setAgentBelief(boolean fixedpie)
 	{
 		isFixedPie = fixedpie;
 	}
@@ -82,7 +84,7 @@ class AgentUtilsExtension
 	 * Adds the given preference to the list of preferences.
 	 * @param p the preference to add
 	 */
-	protected void addPref (Preference p)
+	public void addPref (Preference p)
 	{
 		preferences.add(p);
 	}
@@ -91,7 +93,7 @@ class AgentUtilsExtension
 	 * Removes the 0th element in the preferences queue.
 	 * @return the preference removed, or throws IndexOutOfBoundException 
 	 */
-	protected Preference dequeuePref()
+	public Preference dequeuePref()
 	{
 		return preferences.remove(0);
 	}
@@ -101,7 +103,7 @@ class AgentUtilsExtension
 	 * @param o the offer
 	 * @return the total value (how many points the agent will get)
 	 */
-	protected int myActualOfferValue(Offer o) 
+	public int myActualOfferValue(Offer o) 
 	{
 		int ans = 0;
 		for (int num = 0; num < game.getNumberIssues(); num++)
@@ -127,7 +129,7 @@ class AgentUtilsExtension
 	 * @param o the offer
 	 * @return is full offer
 	 */
-	protected boolean isFullOffer(Offer o)
+	public boolean isFullOffer(Offer o)
 	{
 		boolean ans = true;
 		for (int num = 0; num < game.getNumberIssues(); num++)
@@ -140,7 +142,7 @@ class AgentUtilsExtension
 	 * Returns the normalized ordering of VH preferences (e.g., a point value of {3, 7, 2} would return {2, 1, 3}), with 1 being the highest
 	 * @return an ArrayList of preferences
 	 */
-	protected ArrayList<Integer> getMyOrdering() 
+	public ArrayList<Integer> getMyOrdering() 
 	{
 		int rating = 1;
 		ArrayList<Integer> ans = new ArrayList<Integer>(game.getNumberIssues());
@@ -175,7 +177,7 @@ class AgentUtilsExtension
 	 * @param ordering the ordering
 	 * @return the total value
 	 */
-	protected int adversaryValue(Offer o, ArrayList<Integer> ordering) 
+	public int adversaryValue(Offer o, ArrayList<Integer> ordering) 
 	{
 		int ans = 0;
 		for (int num = 0; num < game.getNumberIssues(); num++)
@@ -260,7 +262,7 @@ class AgentUtilsExtension
 	 * @param type the type of EventClass to search for
 	 * @return the event found, or null
 	 */
-	protected Event lastEvent(LinkedList<Event> history, Event.EventClass type)
+	public Event lastEvent(LinkedList<Event> history, Event.EventClass type)
 	{
 		for (int i = history.size() - 1; i > 0; i--)
 		{
@@ -314,7 +316,7 @@ class AgentUtilsExtension
 	 * Eliminates invalid orderings by looking at preferences, the oldest ones first.
 	 * @return true if there are no valid orderings, false otherwise
 	 */
-	protected boolean reconcileContradictions()
+	public boolean reconcileContradictions()
 	{
 		orderings = new ArrayList<ArrayList<Integer>>();
 		for (int i = 0; i < permutations.length; i++)
@@ -428,7 +430,7 @@ class AgentUtilsExtension
 	 * Finds the ordering among possible orderings that is most/least different than the VH's ordering, based on the value of isFixedPie (set by separate method).
 	 * @return the chosen ordering.
 	 */
-	protected ArrayList<Integer> getMinimaxOrdering()
+	public ArrayList<Integer> getMinimaxOrdering()
 	{
 		boolean reversed = isFixedPie;
 		int valueHeuristic = 0;
@@ -638,7 +640,7 @@ class AgentUtilsExtension
 	 */
 	protected int getLedger()
 	{
-		return this.agent.getLedger();
+		return ((MyCoreAgent) this.agent).getLedger();
 	}
 	
 	/**
@@ -647,7 +649,7 @@ class AgentUtilsExtension
 	 */
 	protected int getTotalLedger()
 	{
-		return this.agent.getTotalLedger();
+		return ((MyCoreAgent) this.agent).getTotalLedger();
 	}
 	
 	/**
@@ -656,7 +658,7 @@ class AgentUtilsExtension
 	 */
 	protected int getVerbalLedger()
 	{
-		return this.agent.getVerbalLedger();
+		return ((MyCoreAgent) this.agent).getVerbalLedger();
 	}
 	
 	/**
@@ -665,7 +667,7 @@ class AgentUtilsExtension
 	 */
 	protected void modifyVerbalLedger(int increment)
 	{
-		this.agent.modifyVerbalLedger(increment);
+		((MyCoreAgent) this.agent).modifyVerbalLedger(increment);
 	}
 	
 	/**
@@ -674,7 +676,7 @@ class AgentUtilsExtension
 	 */
 	protected void modifyOfferLedger(int increment)
 	{
-		this.agent.modifyOfferLedger(increment);
+		((MyCoreAgent) this.agent).modifyOfferLedger(increment);
 	}
 
 
