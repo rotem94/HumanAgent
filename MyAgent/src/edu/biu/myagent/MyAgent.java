@@ -1,8 +1,6 @@
 package edu.biu.myagent;
 
 import javax.websocket.Session;
-
-import edu.usc.ict.iago.agent.IAGOCoreVH;
 import edu.usc.ict.iago.agent.RepeatedFavorBehavior;
 import edu.usc.ict.iago.agent.RepeatedFavorExpression;
 import edu.usc.ict.iago.agent.RepeatedFavorMessage;
@@ -36,6 +34,6 @@ public class MyAgent extends MyCoreAgent {
 	}
 
 	public String agentDescription() {
-			return "<h1>Opponent</h1><p>They are ready to nagotiate!</p>";
+			return "<h1>Rotem</h1><p>He is ready to nagotiate!</p>";
 	}
 }

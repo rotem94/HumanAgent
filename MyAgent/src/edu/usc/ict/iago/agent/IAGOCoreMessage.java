@@ -119,4 +119,6 @@ public abstract class IAGOCoreMessage implements MessagePolicy
 		return "...";
 	}
 
+	public abstract Event getRandomPreference(GameSpec game);
+
 }

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-
 import edu.usc.ict.iago.agent.RepeatedFavorBehavior.LedgerBehavior;
 import edu.usc.ict.iago.utils.Event;
 import edu.usc.ict.iago.utils.GameSpec;
@@ -14,8 +13,6 @@ import edu.usc.ict.iago.utils.Offer;
 import edu.usc.ict.iago.utils.Preference;
 import edu.usc.ict.iago.utils.Preference.Relation;
 import edu.usc.ict.iago.utils.ServletUtils;
-
-
 
 public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePolicy {
 	protected final String[] proposal = {"I think this deal is good for the both of us.", 
@@ -53,9 +50,9 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 			"No rush, but are you going to send me an offer?",
 			"Can I do anything to help us reach a deal that's good for us both?",
 			"I'm sorry, but are you still there?",
-	"Can I provide more information to help us reach consensus?",
-	"Would you please make an offer?","We should try harder to find a deal that benefits us both.", null};
-	
+			"Can I provide more information to help us reach consensus?",
+			"Would you please make an offer?","We should try harder to find a deal that benefits us both.", null};
+
 	private String[] vhIdleQuestions = {"Do you like something best?", "So could you tell me about your preferences?"};	//P++ will only use each of these messages once at the game's start before trying other messages
 
 	private boolean isWithholding;
@@ -72,7 +69,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 		opponentBATNA = -1;
 		agentID = utils.getID();
 	}
-	
+
 	/***
 	 * Constructor for a positive message. The resulting agent can be either withholding or open, lying or honest.
 	 * @param isWithholding a boolean representing whether an agent is withholding (true if yes, false if no)
@@ -163,7 +160,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 	public String getMessageResponse(History history, GameSpec game) {
 		return null;
 	}
-	
+
 	@Override
 	public Event getFavorBehavior(History history, GameSpec game, Event e)
 	{
@@ -186,7 +183,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 	}
 
 	public Event getVerboseMessageResponse(History history, GameSpec game, Event ePrime) {
-	
+
 		int randomDelay = new Random().nextInt(2000) + 3000;			//causes message delays to vary in a range between 3-5 seconds to appear more human-like
 		int delay = (int) (randomDelay*game.getMultiplier()); 
 		int value = -1;
@@ -212,7 +209,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 			Event resp = new Event(agentID, Event.EventClass.SEND_MESSAGE, Event.SubClass.TIMING, str, delay);
 			return resp; 
 		}
-		
+
 		//make sure we have a message
 		if (ePrime.getType() != Event.EventClass.SEND_MESSAGE)
 			return null;
@@ -266,7 +263,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 					isFull = false;
 			}
 		}
-		
+
 		//MAIN RESPONSE
 		switch(ePrime.getSubClass())
 		{
@@ -286,7 +283,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 				isQuery = true;
 			}
 			break;
-	
+
 		case GENERIC_NEG:
 			str = "I'm sorry, have I done something wrong?  I'm just trying to make sure we both get the things that make us the most happy.";
 			sc = Event.SubClass.GENERIC_NEG;
@@ -310,7 +307,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 						issue1 = best;
 						relation = Relation.BEST;
 						isQuery = true;
-						
+
 					}
 				}
 				else
@@ -321,7 +318,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 
 			if(!isFull)
 				str += "  Also, what about the rest of the undecided items?";
-			
+
 			break;	
 		case TIMING: //note: agent responds to this, but this event no longer is a user available action
 			sc = Event.SubClass.GENERIC_POS;
@@ -393,6 +390,18 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 		case PREF_REQUEST:
 		case PREF_SPECIFIC_REQUEST:	
 		case PREF_WITHHOLD:
+			if(p != null && !p.isQuery()) {
+				if(utils.getTotalSentPreferences() >= utils.playerTotalPreferencesSize())
+					return null;
+			}
+			else {
+				if(utils.getTotalSentPreferences() > utils.playerTotalPreferencesSize()) {
+					str = "I don't think it best to reveal more of my intentions yet. Maybe if you did...";
+					sc = Event.SubClass.PREF_WITHHOLD;
+					break;
+				}
+			}
+
 			sc = Event.SubClass.PREF_INFO;
 			if (p == null && !isWithholding)
 			{
@@ -446,10 +455,10 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 				}
 			}
 			break;
-		//case OFFER_REJECT: 
-		//	sc = Event.SubClass.GENERIC_NEG;
-		//	str = this.getRejectLang(history, game);
-		//	break;
+			//case OFFER_REJECT: 
+			//	sc = Event.SubClass.GENERIC_NEG;
+			//	str = this.getRejectLang(history, game);
+			//	break;
 		case OFFER_ACCEPT:
 			sc = Event.SubClass.GENERIC_POS;
 			str = this.getAcceptLang(history, game);
@@ -466,11 +475,11 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 
 					opponentBATNA =  utils.adversaryBATNA;
 					//TODO here is a good opportunity to improve the system so that it doesn't repeat this same info too often!
-					
+
 					//str += "In case you forgot, I already have an offer for " + utils.myPresentedBATNA + " points, so anything that gets me more than " 
 					//		+ utils.myPresentedBATNA + " points will do.";
 					str += "Thank you for the information.  That's helpful.";
-					
+
 					value = utils.myPresentedBATNA;
 					sc = Event.SubClass.GENERIC_POS;
 				} 
@@ -577,6 +586,31 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 		}
 		return resp; 
 
+	}
+
+	public Event getRandomPreference(GameSpec game) {
+		Preference randomPref = utils.randomPref();
+		Relation relation = randomPref.getRelation();
+
+		int value1 = game.getSimplePoints(agentID).get(game.getIssuePluralText().get(randomPref.getIssue1()));
+		int value2 = game.getSimplePoints(agentID).get(game.getIssuePluralText().get(randomPref.getIssue2()));
+
+		if(value1 > value2)
+			relation = Relation.GREATER_THAN;
+		else {
+			if (value2 > value1)
+				relation = Relation.LESS_THAN;
+			else
+				relation = Relation.EQUAL;
+		}
+
+		Preference sendThePref = new Preference(randomPref.getIssue1(), randomPref.getIssue2(), relation, false);
+		String str = prefToEnglish(sendThePref, game);
+		Event resp = new Event(agentID, Event.EventClass.SEND_MESSAGE, Event.SubClass.PREF_INFO, str, 0);	
+
+		resp.encodePreferenceData(sendThePref, game);
+
+		return resp; 
 	}
 
 

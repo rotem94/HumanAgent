@@ -31,20 +31,18 @@ public abstract class MyCoreAgent extends GeneralVH
 	private boolean timeFlag = false;
 	private boolean firstFlag = false;
 	private int noResponse = 0;
-	private int countSmiles = 0;
 	private boolean noResponseFlag = false;
-	private boolean firstGame = true;
 	private boolean disable = false;	//adding a disabler check to help with agent vs. P++ functionality (note this will only be added to corevh and not the ++ version)
 	private int currentGameCount = 0;
 	private Ledger myLedger = new Ledger();
-	
+
 	private class Ledger
 	{
 		int ledgerValue = 0; //favors are added to the final ledger iff the offer was accepted, otherwise discarded.  Positive means agent has conducted a favor.
 		int verbalLedger = 0; //favors get added in here via verbal agreement.  Positive means agent has agreed to grant favors.
 		int offerLedger = 0;  //favors are moved here and consumed from verbal when offer is made.  Positive means agent has made a favorable offer.
 	}
-	
+
 
 
 	/**
@@ -73,7 +71,7 @@ public abstract class MyCoreAgent extends GeneralVH
 		this.messages.setUtils(utils);
 		this.behavior.setUtils(utils);
 	}
-	
+
 	/**
 	 * Returns a simple int representing the internal "ledger" of favors done for the agent.  Can be negative.  Persists across games.
 	 * @return the ledger
@@ -82,7 +80,7 @@ public abstract class MyCoreAgent extends GeneralVH
 	{
 		return myLedger.ledgerValue;
 	}
-	
+
 	/**
 	 * Returns a simple int representing the internal "ledger" of favors done for the agent, including all pending values.  Can be negative.  Does not persist across games.
 	 * @return the ledger
@@ -91,7 +89,7 @@ public abstract class MyCoreAgent extends GeneralVH
 	{
 		return myLedger.ledgerValue + myLedger.offerLedger + myLedger.verbalLedger;
 	}
-	
+
 	/**
 	 * Returns a simple int representing the potential "ledger" of favors verbally agreed to.  Can be negative.  Does not persist across games.
 	 * @return the ledger
@@ -100,7 +98,7 @@ public abstract class MyCoreAgent extends GeneralVH
 	{
 		return myLedger.verbalLedger;
 	}
-	
+
 	/**
 	 * Allows you to modify the agent's internal "ledger" of verbal favors done for it.  
 	 * @param increment value (negative ok)
@@ -108,12 +106,12 @@ public abstract class MyCoreAgent extends GeneralVH
 	public void modifyVerbalLedger(int increment)
 	{
 		ServletUtils.log("Verbal Event! Previous Ledger: v:" + myLedger.verbalLedger + ", o:" + myLedger.offerLedger + ", main:" + myLedger.ledgerValue, ServletUtils.DebugLevels.DEBUG);		
-		
+
 		myLedger.verbalLedger += increment;
-		
+
 		ServletUtils.log("Verbal Event! Current Ledger: v:" + myLedger.verbalLedger + ", o:" + myLedger.offerLedger + ", main:" + myLedger.ledgerValue, ServletUtils.DebugLevels.DEBUG);	
 	}
-	
+
 	/**
 	 * Allows you to modify the agent's internal "ledger" of offer favors proposed.  
 	 * @param increment value (negative ok)
@@ -121,15 +119,15 @@ public abstract class MyCoreAgent extends GeneralVH
 	public void modifyOfferLedger(int increment)
 	{
 		ServletUtils.log("Offer Event! Previous Ledger: v:" + myLedger.verbalLedger + ", o:" + myLedger.offerLedger + ", main:" + myLedger.ledgerValue, ServletUtils.DebugLevels.DEBUG);		
-		
+
 		myLedger.verbalLedger -= increment;
 		myLedger.offerLedger += increment;
-		
+
 		favorOfferIncoming = true;
-		
+
 		ServletUtils.log("Offer Event! Current Ledger: v:" + myLedger.verbalLedger + ", o:" + myLedger.offerLedger + ", main:" + myLedger.ledgerValue, ServletUtils.DebugLevels.DEBUG);	
 	}
-	
+
 	/**
 	 * Allows you to modify the agent's internal "ledger" of offer favors actually executed.  
 	 * Automatically takes the execution from the offerLedger.
@@ -137,13 +135,13 @@ public abstract class MyCoreAgent extends GeneralVH
 	private void modifyLedger()
 	{
 		ServletUtils.log("Finalization Event! Previous Ledger: v:" + myLedger.verbalLedger + ", o:" + myLedger.offerLedger + ", main:" + myLedger.ledgerValue, ServletUtils.DebugLevels.DEBUG);		
-		
+
 		myLedger.ledgerValue += myLedger.offerLedger;
 		myLedger.offerLedger = 0;
-		
+
 		ServletUtils.log("Finalization Event! Current Ledger: v:" + myLedger.verbalLedger + ", o:" + myLedger.offerLedger + ", main:" + myLedger.ledgerValue, ServletUtils.DebugLevels.DEBUG);
 	}
-	
+
 	/**
 	 * Returns a simple int representing the current game count. 
 	 * @return the game number (starting with 1)
@@ -152,7 +150,7 @@ public abstract class MyCoreAgent extends GeneralVH
 	{
 		return currentGameCount;
 	}
-	
+
 
 	/**
 	 * Agents work by responding to various events. This method describes how core agents go about selecting their responses.
@@ -171,79 +169,30 @@ public abstract class MyCoreAgent extends GeneralVH
 			You should always treat the current GameSpec as true (following a GAME_START) and store any useful metadata about past games yourself.
 		 **/
 
-		if(e.getType().equals(Event.EventClass.GAME_START)) 
-		{		
-			currentGameCount++;
-			ServletUtils.log("Game number is now " + currentGameCount + "... reconfiguring!", ServletUtils.DebugLevels.DEBUG);
-			AgentUtilsExtension aue = new AgentUtilsExtension(this);
-			aue.configureGame(game);
-			this.utils = aue;
-			this.messages.setUtils(utils);
-			this.behavior.setUtils(utils);	
-			this.disable = false;
+		if(e.getType().equals(Event.EventClass.GAME_START)) {
+			startGame(resp);
 
-			//if we wanted, we could change our Policies between games... but not easily.  Probably don't do that.  Just don't.
-
-			//we should also reset some things
-			timeFlag = false;
-			firstFlag = false;
-			noResponse = 0;
-			noResponseFlag = false;
-			myLedger.offerLedger = 0;
-			myLedger.verbalLedger = 0;
-			
-			boolean liar = messages.getLying(game);
-			utils.myPresentedBATNA = utils.getLyingBATNA(game, utils.LIE_THRESHOLD, liar);
-
-			if(!firstGame)
-			{
-				String newGameMessage = "It's good to see you again!  Let's get ready to negotiate again.";
-				Event e0 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.NONE, newGameMessage, (int) (100*game.getMultiplier()));
-				resp.add(e0);
-				return resp;
-			}
-			firstGame = false;
+			return resp;
 		}
-		
-		
-		
-		 if(e.getType().equals(Event.EventClass.OFFER_IN_PROGRESS)) 
+
+		if(e.getType().equals(Event.EventClass.OFFER_IN_PROGRESS)) 
 		{	
 			disable = true;
 			ServletUtils.log("Agent is currently being restrained", ServletUtils.DebugLevels.DEBUG);
 			return resp;
 		}
-		 
+
 
 		//should we lead with an offer?
 		if(!firstFlag && !this.disable)
 		{
-			ServletUtils.log("First offer being made.", ServletUtils.DebugLevels.DEBUG);
-			firstFlag = true;
-			Event e2 = new Event(this.getID(), Event.EventClass.SEND_OFFER, behavior.getFirstOffer(getHistory()), 0); 
-			if(e2.getOffer() != null)
-			{
-				ServletUtils.log("First offer isn't null.", ServletUtils.DebugLevels.DEBUG);
-				Event e3 = new Event(this.getID(), Event.EventClass.OFFER_IN_PROGRESS, 0);
-				resp.add(e3);
-				Event e4 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.NONE, messages.getProposalLangFirst(),  (int) (1000*game.getMultiplier()));
-				resp.add(e4);
-				lastOfferSent = e2.getOffer();
-				if(favorOfferIncoming)
-				{
-					favorOffer = lastOfferSent;
-					favorOfferIncoming = false;
-				}
-				resp.add(e2);
-			}
-
-			String revealBATNA = "Just so you know, I already have an offer for " + utils.myPresentedBATNA + " points, so I won't accept anything less.   What about you?";
+			/*String revealBATNA = "Just so you know, I already have an offer for " + utils.myPresentedBATNA + " points, so I won't accept anything less.   What about you?";
 			Event e5 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.BATNA_INFO, utils.myPresentedBATNA, revealBATNA,  (int) (1000*game.getMultiplier()));
-			resp.add(e5);
+			resp.add(e5);*/
 			disable = false;
-			
+
 			Event e6 = messages.getFavorBehavior(getHistory(), game, e);
-			
+
 			if (e6 != null && (e6.getType() == EventClass.OFFER_IN_PROGRESS || e6.getSubClass() == Event.SubClass.FAVOR_ACCEPT)) 
 			{
 				Event e7 = new Event(this.getID(), Event.EventClass.SEND_OFFER, behavior.getNextOffer(getHistory()), (int) (700*game.getMultiplier())); 
@@ -272,16 +221,6 @@ public abstract class MyCoreAgent extends GeneralVH
 		//what to do when player sends an expression -- react to it with text and our own expression
 		if(e.getType().equals(Event.EventClass.SEND_EXPRESSION))
 		{
-			/*if(currentGameCount > 1) {
-				if(currentExpressionHappy()) {
-					countSmiles++;
-					
-					String smiles = "This is the " + countSmiles + "th time you've smiled";
-					Event countSmilesEvent = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.NONE, smiles, (int) (700*game.getMultiplier()));
-					resp.add(countSmilesEvent);
-				}
-			}*/
-			
 			String expr = expression.getExpression(getHistory());
 			if (expr != null)
 			{
@@ -320,9 +259,9 @@ public abstract class MyCoreAgent extends GeneralVH
 		{
 			Event lastOffer = utils.lastEvent(getHistory().getHistory(), Event.EventClass.SEND_OFFER);
 			Event lastTime = utils.lastEvent(getHistory().getHistory(), Event.EventClass.TIME);
-			
+
 			disable = false;
-			
+
 			int totalItems = 0;
 			for (int i = 0; i < game.getNumberIssues(); i++)
 				totalItems += game.getIssueQuantities().get(i);
@@ -457,7 +396,7 @@ public abstract class MyCoreAgent extends GeneralVH
 			boolean firstOffer = false;
 			if (this.lastOfferReceived == null)
 				firstOffer = true;
-				
+
 			Offer o = e.getOffer();//incoming offer
 			this.lastOfferReceived = o; 
 
@@ -490,7 +429,7 @@ public abstract class MyCoreAgent extends GeneralVH
 			}
 			else if(utils.myActualOfferValue(o) + behavior.getAcceptMargin() > utils.adversaryValue(o, utils.getMinimaxOrdering()))
 				totalFair = true;//total offer still fair
-			
+
 			//totalFair too hard, so always set to true here
 			totalFair = true;
 
@@ -569,8 +508,8 @@ public abstract class MyCoreAgent extends GeneralVH
 					resp.add(e3);
 				}
 			}
-			
-			
+
+
 			return resp;
 		}
 
@@ -584,10 +523,11 @@ public abstract class MyCoreAgent extends GeneralVH
 			} else {
 				p = new Preference(e.getPreference().getIssue1(), e.getPreference().getIssue2(), e.getPreference().getRelation(), e.getPreference().isQuery());
 			}
-			
+
 			if (p != null && !p.isQuery()) //a preference was expressed
 			{
 				utils.addPref(p);
+
 				if(utils.reconcileContradictions())
 				{
 					//we simply drop the oldest expressed preference until we are reconciled.  This is not the best method, as it may not be the the most efficient route.
@@ -619,7 +559,7 @@ public abstract class MyCoreAgent extends GeneralVH
 				resp.add(e0);
 			}
 
-		
+
 			Event e0 = messages.getVerboseMessageResponse(getHistory(), game, e);
 			if (e0 != null && (e0.getType() == EventClass.OFFER_IN_PROGRESS || e0.getSubClass() == Event.SubClass.FAVOR_ACCEPT)) 
 			{
@@ -649,7 +589,7 @@ public abstract class MyCoreAgent extends GeneralVH
 			}
 
 			boolean offerRequested = (e.getSubClass() == Event.SubClass.OFFER_REQUEST_NEG || e.getSubClass() == Event.SubClass.OFFER_REQUEST_POS);
-						
+
 			if(offerRequested)
 			{	
 				if(utils.adversaryBATNA + utils.myPresentedBATNA > utils.getMaxPossiblePoints()) 
@@ -748,13 +688,65 @@ public abstract class MyCoreAgent extends GeneralVH
 		return resp;
 	}
 
-	private boolean currentExpressionHappy() {
-		Event last = getHistory().getUserHistory().getLast();
-		
-		if(last.getMessage().equals("happy"))
-			return true;
-		
-		return false;
+	private void startGame(LinkedList<Event> resp) {
+		initData();
+
+		if(currentGameCount > 1)
+		{
+			//Event e0 = utils.getSecondGameGreetMessage();
+			int firstGamePlayerPref = utils.getFirstGamePreferences();
+			int firstGameMyPref = utils.getFirstGameSentPreferences();
+			
+			//if(firstGamePlayerPref )
+			String newGameMessage = "It's good to see you again!  Let's get ready to negotiate again.";
+			Event e0 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.NONE, newGameMessage, 
+					(int) (1000*game.getMultiplier()));
+			resp.add(e0);
+		}
+		else {
+			String preferenceStr = "Before we start nagotiating, I'll send you a preference of mine, to show you i'm cooperative:";
+			String sendYourPrefStr = "Can you send me one of your preferences now? So that I know that you are also cooperative...";
+
+			utils.addSentPreferences();
+
+			Event cooperateEvent = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.NONE, preferenceStr, 
+					(int) (1000*game.getMultiplier()));
+			Event prefToSend = messages.getRandomPreference(game);
+			Event playerCooperateEvent = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.NONE, sendYourPrefStr, 
+					(int) (1000*game.getMultiplier()));
+
+			resp.add(cooperateEvent);
+			resp.add(prefToSend);
+			resp.add(playerCooperateEvent);
+		}
+	}
+
+	private void initData() {
+		currentGameCount++;
+
+		ServletUtils.log("Game number is now " + currentGameCount + "... reconfiguring!", ServletUtils.DebugLevels.DEBUG);
+
+		AgentUtilsExtension aue;
+
+		if(currentGameCount == 1) 
+			aue = new AgentUtilsExtension(this);
+		else 
+			aue = new AgentUtilsExtension(this, utils.getSentPreferences(), utils.playerPreferencesSize());
+
+		aue.configureGame(game);
+
+		this.utils = aue;
+		this.messages.setUtils(utils);
+		this.behavior.setUtils(utils);	
+		this.disable = false;
+
+		timeFlag = false;
+		firstFlag = false;
+		noResponse = 0;
+		noResponseFlag = false;
+		myLedger.offerLedger = 0;
+		myLedger.verbalLedger = 0;
+		utils.myPresentedBATNA = utils.getLyingBATNA(game, utils.LIE_THRESHOLD, messages.getLying(game));
 	}
 
 	/**
