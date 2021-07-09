@@ -4,6 +4,7 @@ import java.util.LinkedList;
 
 import javax.websocket.Session;
 
+import edu.biu.myagent.MyAgentUtils;
 import edu.usc.ict.iago.utils.Event;
 import edu.usc.ict.iago.utils.GameSpec;
 import edu.usc.ict.iago.utils.GeneralVH;
@@ -57,15 +58,15 @@ public abstract class IAGOCoreVH extends GeneralVH
 		super(name, game, session);
 
 		AgentUtilsExtension aue = new AgentUtilsExtension(this);
-		aue.configureGame(game);
+		//aue.configureGame(game);
 		this.utils = aue;
 		this.expression = expression;
 		this.messages = messages;
 		this.behavior = behavior;
 		aue.setAgentBelief(this.behavior.getAgentBelief());
 
-		this.messages.setUtils(utils);
-		this.behavior.setUtils(utils);
+		this.messages.setUtils(new MyAgentUtils(this));
+		this.behavior.setUtils(new MyAgentUtils(this));
 	}
 	
 	/**
@@ -170,10 +171,10 @@ public abstract class IAGOCoreVH extends GeneralVH
 			currentGameCount++;
 			ServletUtils.log("Game number is now " + currentGameCount + "... reconfiguring!", ServletUtils.DebugLevels.DEBUG);
 			AgentUtilsExtension aue = new AgentUtilsExtension(this);
-			aue.configureGame(game);
+			//aue.configureGame(game);
 			this.utils = aue;
-			this.messages.setUtils(utils);
-			this.behavior.setUtils(utils);	
+			this.messages.setUtils(new MyAgentUtils(this));
+			this.behavior.setUtils(new MyAgentUtils(this));	
 			this.disable = false;
 
 			//if we wanted, we could change our Policies between games... but not easily.  Probably don't do that.  Just don't.
@@ -187,7 +188,7 @@ public abstract class IAGOCoreVH extends GeneralVH
 			myLedger.verbalLedger = 0;
 			
 			boolean liar = messages.getLying(game);
-			utils.myPresentedBATNA = utils.getLyingBATNA(game, utils.LIE_THRESHOLD, liar);
+			utils.myPresentedBATNA = utils.getLyingBATNA(game, 0.6, liar);
 
 			if(!firstGame)
 			{
@@ -571,16 +572,16 @@ public abstract class IAGOCoreVH extends GeneralVH
 			
 			if (p != null && !p.isQuery()) //a preference was expressed
 			{
-				utils.addPref(p);
+				//utils.addPref(p);
 				if(utils.reconcileContradictions())
 				{
 					//we simply drop the oldest expressed preference until we are reconciled.  This is not the best method, as it may not be the the most efficient route.
 					LinkedList<String> dropped = new LinkedList<String>();
-					dropped.add(IAGOCoreMessage.prefToEnglish(utils.dequeuePref(), game));
+					//dropped.add(IAGOCoreMessage.prefToEnglish(utils.dequeuePref(), game));
 					int overflowCount = 0;
 					while(utils.reconcileContradictions() && overflowCount < 5)
 					{
-						dropped.add(IAGOCoreMessage.prefToEnglish(utils.dequeuePref(), game));
+						//dropped.add(IAGOCoreMessage.prefToEnglish(utils.dequeuePref(), game));
 						overflowCount++;
 					}
 					String drop = "";

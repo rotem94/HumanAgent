@@ -21,6 +21,10 @@ public class RepeatedFavorExpression extends IAGOCoreExpression implements Expre
 		return "sad";
 	}
 
+	public String getAngryEmotion() {
+		return "angry";
+	}
+	
 	@Override
 	public String getExpression(History history) 
 	{

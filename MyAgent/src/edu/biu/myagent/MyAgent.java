@@ -25,7 +25,7 @@ public class MyAgent extends MyCoreAgent {
 	{
 		super("UrsulaFavor", game, session, new RepeatedFavorBehavior(RepeatedFavorBehavior.LedgerBehavior.LIMITED), new RepeatedFavorExpression(), 
 				new RepeatedFavorMessage(false, false, RepeatedFavorBehavior.LedgerBehavior.LIMITED, game));	
-		
+
 		super.safeForMultiAgent = true;
 	}
 
@@ -34,6 +34,6 @@ public class MyAgent extends MyCoreAgent {
 	}
 
 	public String agentDescription() {
-			return "<h1>Rotem</h1><p>He is ready to nagotiate!</p>";
+		return "<h1>Rotem</h1><p>He is ready to nagotiate!</p>";
 	}
 }

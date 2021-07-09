@@ -3,6 +3,7 @@ package edu.usc.ict.iago.agent;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.biu.myagent.MyAgentUtils;
 import edu.usc.ict.iago.utils.BehaviorPolicy;
 import edu.usc.ict.iago.utils.GameSpec;
 import edu.usc.ict.iago.utils.History;
@@ -11,7 +12,7 @@ import edu.usc.ict.iago.utils.ServletUtils;
 
 public class IAGOConcedingBehavior extends IAGOCoreBehavior implements BehaviorPolicy {
 		
-	private AgentUtilsExtension utils;
+	private MyAgentUtils utils;
 	private GameSpec game;	
 	private Offer allocated;
 	private Offer concession;
@@ -35,7 +36,7 @@ public class IAGOConcedingBehavior extends IAGOCoreBehavior implements BehaviorP
 	}
 
 	@Override
-	public void setUtils(AgentUtilsExtension utils)
+	public void setUtils(MyAgentUtils utils)
 	{
 		this.utils = utils;
 		

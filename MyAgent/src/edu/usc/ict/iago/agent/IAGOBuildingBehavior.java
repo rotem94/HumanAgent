@@ -2,6 +2,7 @@ package edu.usc.ict.iago.agent;
 
 import java.util.ArrayList;
 
+import edu.biu.myagent.MyAgentUtils;
 import edu.usc.ict.iago.utils.BehaviorPolicy;
 import edu.usc.ict.iago.utils.GameSpec;
 import edu.usc.ict.iago.utils.History;
@@ -9,12 +10,12 @@ import edu.usc.ict.iago.utils.Offer;
 
 public class IAGOBuildingBehavior extends IAGOCoreBehavior implements BehaviorPolicy {
 		
-	private AgentUtilsExtension utils;
+	private MyAgentUtils utils;
 	private GameSpec game;	
 	private Offer allocated;
 		
 	@Override
-	public void setUtils(AgentUtilsExtension utils)
+	public void setUtils(MyAgentUtils utils)
 	{
 		this.utils = utils;
 		
@@ -112,9 +113,9 @@ public class IAGOBuildingBehavior extends IAGOCoreBehavior implements BehaviorPo
 				propose.setItem(userFave, new int[] {allocated.getItem(userFave)[0] + 1, free[userFave] - 2, allocated.getItem(userFave)[2] + 1});
 			else // Otherwise just give the one item left to the player
 			{
-				if (utils.myRow == 0) {
+				if (utils.getMyRow() == 0) {
 					propose.setItem(userFave, new int[] {allocated.getItem(userFave)[0], free[userFave] - 1, allocated.getItem(userFave)[2] + 1});
-				} else if (utils.myRow == 2) {
+				} else if (utils.getMyRow() == 2) {
 					propose.setItem(userFave, new int[] {allocated.getItem(userFave)[0] + 1, free[userFave] - 1, allocated.getItem(userFave)[2]});
 				}
 			}

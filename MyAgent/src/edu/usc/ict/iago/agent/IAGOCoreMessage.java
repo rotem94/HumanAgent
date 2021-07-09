@@ -3,6 +3,7 @@ package edu.usc.ict.iago.agent;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import edu.biu.myagent.MyAgentUtils;
 import edu.usc.ict.iago.utils.Event;
 import edu.usc.ict.iago.utils.GameSpec;
 import edu.usc.ict.iago.utils.History;
@@ -26,7 +27,7 @@ public abstract class IAGOCoreMessage implements MessagePolicy
 
 	public abstract String getContradictionResponse(String drop);
 
-	public abstract void setUtils(AgentUtilsExtension utils);
+	public abstract void setUtils(MyAgentUtils utils);
 
 	public boolean getLying(GameSpec game)
 	{

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+
+import edu.biu.myagent.MyAgentUtils;
 import edu.usc.ict.iago.agent.RepeatedFavorBehavior.LedgerBehavior;
 import edu.usc.ict.iago.utils.Event;
 import edu.usc.ict.iago.utils.GameSpec;
@@ -13,6 +15,7 @@ import edu.usc.ict.iago.utils.Offer;
 import edu.usc.ict.iago.utils.Preference;
 import edu.usc.ict.iago.utils.Preference.Relation;
 import edu.usc.ict.iago.utils.ServletUtils;
+import edu.usc.ict.iago.utils.Event.SubClass;
 
 public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePolicy {
 	protected final String[] proposal = {"I think this deal is good for the both of us.", 
@@ -58,12 +61,12 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 	private boolean isWithholding;
 	private boolean lying;
 	private RepeatedFavorBehavior.LedgerBehavior lb;
-	private AgentUtilsExtension utils;
+	private MyAgentUtils utils;
 	private int opponentBATNA = -1;
 	private int agentID;
 	private GameSpec gs;
 
-	public void setUtils(AgentUtilsExtension utils)
+	public void setUtils(MyAgentUtils utils)
 	{
 		this.utils = utils;
 		opponentBATNA = -1;
@@ -368,21 +371,22 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 			break;
 		case THREAT_POS: // "I'm sorry but I think I'm going to have to walk away.");
 		case THREAT_NEG: // "This is a warning, I'm about to walk away."
-			int loweredBATNA = utils.lowerBATNA(utils.myPresentedBATNA);
-			if(loweredBATNA != utils.myPresentedBATNA) 
+			int loweredBATNA = utils.lowerBATNA(utils.getMyPresentedBATNA());
+			if(loweredBATNA != utils.getMyPresentedBATNA()) 
 			{
-				utils.myPresentedBATNA = utils.lowerBATNA(utils.myPresentedBATNA);
-				str = "Well, maybe I can accept a little less. Would you be able to give me at least " + utils.myPresentedBATNA + " points?";
-				value = utils.myPresentedBATNA;
+				utils.setMyPresentedBATNA(utils.lowerBATNA(utils.getMyPresentedBATNA()));
+
+				str = "Well, maybe I can accept a little less. Would you be able to give me at least " + utils.getMyPresentedBATNA() + " points?";
+				value = utils.getMyPresentedBATNA();
 				sc = Event.SubClass.BATNA_INFO;
 			}
-			else if (!utils.conflictBATNA(utils.myPresentedBATNA, opponentBATNA))
+			else if (!utils.conflictBATNA(utils.getMyPresentedBATNA(), opponentBATNA))
 			{
 				str = "Please don't go yet! Maybe we can still make a deal. Would you mind reminding me what you would like?";
 				sc = Event.SubClass.BATNA_REQUEST;
 			}
 			else {
-				str = "Oh well, I guess we really should walk away. Are you sure you can't accept anything less than " + utils.adversaryBATNA + " points?";
+				str = "Oh well, I guess we really should walk away. Are you sure you can't accept anything less than " + utils.getAdversaryBATNA() + " points?";
 				sc = Event.SubClass.BATNA_REQUEST;
 			}
 			break;
@@ -390,7 +394,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 		case PREF_REQUEST:
 		case PREF_SPECIFIC_REQUEST:	
 		case PREF_WITHHOLD:
-			if(p != null && !p.isQuery()) {
+			/*if(p != null && !p.isQuery()) {
 				if(utils.getTotalSentPreferences() >= utils.playerTotalPreferencesSize())
 					return null;
 			}
@@ -400,7 +404,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 					sc = Event.SubClass.PREF_WITHHOLD;
 					break;
 				}
-			}
+			}*/
 
 			sc = Event.SubClass.PREF_INFO;
 			if (p == null && !isWithholding)
@@ -466,29 +470,29 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 		case BATNA_INFO:
 			if (ePrime.getValue() != -1)
 			{
-				utils.adversaryBATNA = ePrime.getValue();
-				if (!utils.conflictBATNA(utils.myPresentedBATNA, utils.adversaryBATNA))
+				utils.setAdersaryBATNA(ePrime.getValue());
+				if (!utils.conflictBATNA(utils.getMyPresentedBATNA(), utils.getAdversaryBATNA()))
 				{	
-					if(opponentBATNA != utils.adversaryBATNA && opponentBATNA != -1) 
+					if(opponentBATNA != utils.getAdversaryBATNA() && opponentBATNA != -1) 
 						str = "Oh it is? I thought you needed more than " + opponentBATNA + " points. ";
 
 
-					opponentBATNA =  utils.adversaryBATNA;
+					opponentBATNA = utils.getAdversaryBATNA();
 					//TODO here is a good opportunity to improve the system so that it doesn't repeat this same info too often!
 
 					//str += "In case you forgot, I already have an offer for " + utils.myPresentedBATNA + " points, so anything that gets me more than " 
 					//		+ utils.myPresentedBATNA + " points will do.";
 					str += "Thank you for the information.  That's helpful.";
 
-					value = utils.myPresentedBATNA;
+					value = utils.getMyPresentedBATNA();
 					sc = Event.SubClass.GENERIC_POS;
 				} 
 				else
 				{
-					opponentBATNA =  utils.adversaryBATNA;
-					str = "Well, since you can't accept anything less than " + utils.adversaryBATNA + " points and I can't accept anything that gets me less than " 
-							+ utils.myPresentedBATNA + " points, I don't think we'll be able to make a deal. Maybe we should just walk away.";
-					value = utils.myPresentedBATNA; 
+					opponentBATNA =  utils.getAdversaryBATNA();
+					str = "Well, since you can't accept anything less than " + utils.getAdversaryBATNA() + " points and I can't accept anything that gets me less than " 
+							+ utils.getMyPresentedBATNA() + " points, I don't think we'll be able to make a deal. Maybe we should just walk away.";
+					value = utils.getMyPresentedBATNA(); 
 					sc = Event.SubClass.THREAT_POS;
 				}
 			}
@@ -499,9 +503,9 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 
 			break;
 		case BATNA_REQUEST:
-			str += "I already have an offer for " + utils.myPresentedBATNA + " points, so anything that gets me more than " 
-					+ utils.myPresentedBATNA + " points will do.";
-			value = utils.myPresentedBATNA;
+			str += "I already have an offer for " + utils.getMyPresentedBATNA() + " points, so anything that gets me more than " 
+					+ utils.getMyPresentedBATNA() + " points will do.";
+			value = utils.getMyPresentedBATNA();
 			sc = Event.SubClass.BATNA_INFO;
 			break;
 		case CONFUSION:
@@ -582,6 +586,9 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 		}
 
 		if (relation != null) {
+			if(resp.getSubClass() == SubClass.PREF_INFO)
+				utils.addAgentPreference(p);
+
 			resp.encodePreferenceData(new Preference(issue1, issue2, relation, isQuery), gs);
 		}
 		return resp; 
@@ -608,6 +615,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 		String str = prefToEnglish(sendThePref, game);
 		Event resp = new Event(agentID, Event.EventClass.SEND_MESSAGE, Event.SubClass.PREF_INFO, str, 0);	
 
+		utils.addAgentPreference(sendThePref);
 		resp.encodePreferenceData(sendThePref, game);
 
 		return resp; 

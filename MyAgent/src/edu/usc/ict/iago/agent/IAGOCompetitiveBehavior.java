@@ -3,6 +3,7 @@ package edu.usc.ict.iago.agent;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.biu.myagent.MyAgentUtils;
 import edu.usc.ict.iago.utils.BehaviorPolicy;
 import edu.usc.ict.iago.utils.GameSpec;
 import edu.usc.ict.iago.utils.History;
@@ -12,7 +13,7 @@ import edu.usc.ict.iago.utils.ServletUtils.DebugLevels;
 
 public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements BehaviorPolicy {
 		
-	private AgentUtilsExtension utils;
+	private MyAgentUtils utils;
 	private GameSpec game;	
 	private Offer allocated;
 	private Offer concession;
@@ -36,7 +37,7 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 	}
 
 	@Override
-	public void setUtils(AgentUtilsExtension utils)
+	public void setUtils(MyAgentUtils utils)
 	{
 		this.utils = utils;
 		utils.competitive = true;
@@ -72,11 +73,11 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 			if (ordering.get(issue) == 1) // If the issue is my most valued issue
 			{
 				// Claim all of our favorite issue
-				if (utils.myRow == 0)
+				if (utils.getMyRow() == 0)
 				{
 					propose.setItem(issue, new int[] {quants.get(issue), 0, 0});
 				} 
-				else if (utils.myRow == 2) 
+				else if (utils.getMyRow() == 2) 
 				{
 					propose.setItem(issue, new int[] {0, 0, quants.get(issue)});
 				}
@@ -84,11 +85,11 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 			else
 			{
 				// Take only half, still don't give adversary any issues
-				if (utils.myRow == 0) 
+				if (utils.getMyRow() == 0) 
 				{
 					propose.setItem(issue, new int[] {(int)((quants.get(issue)/2.0) + .5), quants.get(issue) - (int)((quants.get(issue)/2.0) + .5), 0});
 				} 
-				else if (utils.myRow == 2) 
+				else if (utils.getMyRow() == 2) 
 				{
 					propose.setItem(issue, new int[] {0, quants.get(issue) - (int)((quants.get(issue)/2.0) + .5), (int)((quants.get(issue)/2.0) + .5)});
 				}
@@ -109,10 +110,8 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 		int myBATNA = game.getBATNA(utils.getID());
 		
 		// If the BATNAs conflict, we can't make an offer anyway
-		if (utils.conflictBATNA(myBATNA, utils.adversaryBATNA)) 
-		{
+		if (utils.conflictBATNA(myBATNA, utils.getAdversaryBATNA()))
 			return null; 
-		}
 		
 		int opponentValue = 0;
 		ArrayList<Integer> ordering = utils.getMyOrdering();
@@ -138,7 +137,7 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 		// Find issue such that agent has at least 1 item and it is our least valued issue
 		for(int i  = 0; i < game.getNumberIssues(); i++)
 		{
-			if(concession.getItem(i)[utils.myRow] > 0 && ordering.get(i) > min)
+			if(concession.getItem(i)[utils.getMyRow()] > 0 && ordering.get(i) > min)
 			{
 				bottomIndex = i;
 				min = ordering.get(i);
@@ -149,10 +148,10 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 		{
 			for (int issue = 0; issue < game.getNumberIssues(); issue++)
 			{
-				if (utils.myRow == 0) {
+				if (utils.getMyRow() == 0) {
 					propose.setItem(issue, new int[] {concession.getItem(issue)[0], 0, concession.getItem(issue)[2] + free[issue]});
 				} 
-				else if (utils.myRow == 2)
+				else if (utils.getMyRow() == 2)
 				{
 					propose.setItem(issue, new int[] {concession.getItem(issue)[0] + free[issue], 0, concession.getItem(issue)[2]});
 				}
@@ -163,11 +162,11 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 		else if(bottomIndex < game.getNumberIssues()) //concede my worst, don't run this block if VH doesn't have any more items to concede
 		{
 			
-			if (utils.myRow == 0)
+			if (utils.getMyRow() == 0)
 			{
 				propose.setItem(bottomIndex, new int[] {concession.getItem(bottomIndex)[0] - 1, 0, concession.getItem(bottomIndex)[2] + 1});
 			} 
-			else if (utils.myRow == 2) 
+			else if (utils.getMyRow() == 2) 
 			{
 				propose.setItem(bottomIndex, new int[] {concession.getItem(bottomIndex)[0] + 1, 0, concession.getItem(bottomIndex)[2] - 1});
 			}
@@ -188,7 +187,7 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 		
 		opponentValue = utils.getAdversaryValue(propose);
 		ServletUtils.log("Ensuring new offer is fair to opponent...", ServletUtils.DebugLevels.DEBUG);
-		while (opponentValue < utils.adversaryBATNA)
+		while (opponentValue < utils.getAdversaryBATNA())
 		{	//concede to opponent's BATNA
 			
 			bottomIndex = game.getNumberIssues();
@@ -196,18 +195,18 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 			
 			for(int i  = 0; i < game.getNumberIssues(); i++)
 			{
-				if(concession.getItem(i)[utils.myRow] > 0 && ordering.get(i) > min)
+				if(concession.getItem(i)[utils.getMyRow()] > 0 && ordering.get(i) > min)
 				{
 					bottomIndex = i;
 					min = ordering.get(i);
 				}
 			}
 			
-			if (utils.myRow == 0)
+			if (utils.getMyRow() == 0)
 			{
 				propose.setItem(bottomIndex, new int[] {concession.getItem(bottomIndex)[0] - 1, 0, concession.getItem(bottomIndex)[2] + 1});
 			}
-			else if (utils.myRow == 2)
+			else if (utils.getMyRow() == 2)
 			{
 				propose.setItem(bottomIndex, new int[] {concession.getItem(bottomIndex)[0] + 1, 0, concession.getItem(bottomIndex)[2] - 1});
 			}
@@ -283,11 +282,11 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 		else 
 		{
 			// Agent takes all of the items left of its favorite
-			if (utils.myRow == 0) 
+			if (utils.getMyRow() == 0) 
 			{
 				propose.setItem(opponentFave, new int[] {concession.getItem(opponentFave)[0] + free[opponentFave], 0, concession.getItem(opponentFave)[2]}); 
 			} 
-			else if (utils.myRow == 2) 
+			else if (utils.getMyRow() == 2) 
 			{
 				propose.setItem(opponentFave, new int[] {concession.getItem(opponentFave)[0], 0, concession.getItem(opponentFave)[2] + free[opponentFave]});
 			}
@@ -321,11 +320,11 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 		{
 			for (int issue = 0; issue < game.getNumberIssues(); issue++)
 			{
-				if (utils.myRow == 0)
+				if (utils.getMyRow() == 0)
 				{
 					propose.setItem(issue, new int[] {concession.getItem(issue)[0], 0, concession.getItem(issue)[2] + free[issue]});
 				} 
-				else if (utils.myRow == 2)
+				else if (utils.getMyRow() == 2)
 				{
 					propose.setItem(issue, new int[] {concession.getItem(issue)[0] + free[issue], 0, concession.getItem(issue)[2]});
 				}
@@ -363,11 +362,11 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 		{
 			for (int issue = 0; issue < game.getNumberIssues(); issue++)
 			{
-				if (utils.myRow == 0) 
+				if (utils.getMyRow() == 0) 
 				{
 					propose.setItem(issue, new int[] {concession.getItem(issue)[0], 0, concession.getItem(issue)[2] + free[issue]});
 				} 
-				else if (utils.myRow == 2) 
+				else if (utils.getMyRow() == 2) 
 				{
 					propose.setItem(issue, new int[] {concession.getItem(issue)[0] + free[issue], 0, concession.getItem(issue)[2]});
 				}
@@ -391,10 +390,10 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 		double myValue, opponentValue, jointValue;
 		myValue = utils.myActualOfferValue(o);
 		opponentValue = utils.getAdversaryValue(o);
-		ServletUtils.log("acceptOffer method - Agent Value: " + myValue + ", Perceived Opponent Value: " + opponentValue + ", Opponent BATNA: " + utils.adversaryBATNA, ServletUtils.DebugLevels.DEBUG);
+		ServletUtils.log("acceptOffer method - Agent Value: " + myValue + ", Perceived Opponent Value: " + opponentValue + ", Opponent BATNA: " + utils.getAdversaryBATNA(), ServletUtils.DebugLevels.DEBUG);
 		jointValue = myValue + opponentValue;
-		return (myValue/jointValue > .6 & myValue >= utils.myPresentedBATNA) || 
-			   (!utils.conflictBATNA(utils.myPresentedBATNA, utils.adversaryBATNA) && myValue >= utils.myPresentedBATNA);	//The threshold of .6 is semi-arbitrary
+		return (myValue/jointValue > .6 & myValue >= utils.getMyPresentedBATNA()) || 
+			   (!utils.conflictBATNA(utils.getMyPresentedBATNA(), utils.getAdversaryBATNA()) && myValue >= utils.getMyPresentedBATNA());	//The threshold of .6 is semi-arbitrary
 	}
 	
 	/**
@@ -407,10 +406,10 @@ public class IAGOCompetitiveBehavior extends IAGOCoreBehavior implements Behavio
 		{
 			int[] init = {0,0,0};
 			
-			if (utils.myRow == 0) 
+			if (utils.getMyRow() == 0) 
 			{
 				init = new int[] {game.getIssueQuantities().get(i), 0, 0};
-			} else if (utils.myRow == 2) 
+			} else if (utils.getMyRow() == 2) 
 			{
 				init = new int[] {0, 0, game.getIssueQuantities().get(i)};
 			}

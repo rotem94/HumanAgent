@@ -30,4 +30,10 @@ public class IAGODefaultExpression extends IAGOCoreExpression implements Express
 		return null;
 	}
 
+	@Override
+	public String getAngryEmotion() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

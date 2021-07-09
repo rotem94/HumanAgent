@@ -1,5 +1,6 @@
 package edu.usc.ict.iago.agent;
 
+import edu.biu.myagent.MyAgentUtils;
 import edu.usc.ict.iago.utils.BehaviorPolicy;
 import edu.usc.ict.iago.utils.History;
 import edu.usc.ict.iago.utils.Offer;
@@ -29,7 +30,7 @@ public abstract class IAGOCoreBehavior implements BehaviorPolicy
 	 * Helper for adding an AgentUtilsExtension.
 	 * @param utils the utils to add
 	 */
-	public abstract void setUtils(AgentUtilsExtension utils);
+	public abstract void setUtils(MyAgentUtils utils);
 
 	/**
 	 * Gets the offer that comes when you've been idle.
