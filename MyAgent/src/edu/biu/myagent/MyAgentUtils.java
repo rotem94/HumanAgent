@@ -23,6 +23,7 @@ public class MyAgentUtils {
 	private GeneralVH agent;
 	private GameInfo firstGameInfo;
 	private GameInfo secondGameInfo;
+	private boolean thirdGamePlayerLies;
 	public boolean competitive;
 
 	/**
@@ -115,11 +116,21 @@ public class MyAgentUtils {
 	 */
 	public void addPref (Preference p, int gameNumber)
 	{
-		if(p == null)
+		if(p == null || playerLiedInTheCurrentGame(gameNumber))
 			return;
 
 		if(preferenceDoesntExist(currentPlayerPreferences, p))
 			currentPlayerPreferences.add(p);
+	}
+
+	private boolean playerLiedInTheCurrentGame(int gameNumber) {
+		if(gameNumber == 1)
+			return firstGameInfo.getGameLiesPercent() == 1f;
+
+		if(gameNumber == 2)
+			return secondGameInfo.getGameLiesPercent() == 1f;
+
+		return thirdGamePlayerLies;
 	}
 
 	/**
@@ -273,11 +284,15 @@ public class MyAgentUtils {
 	public boolean reconcileContradictions(int currentGameCount)
 	{
 		if(currentGameAgentUtils.reconcileContradictions()) {
-			if(currentGameCount == 1) 
+			switch(currentGameCount) {
+			case 1:
 				firstGameInfo.playerLied();
-			else {
-				if(currentGameCount == 2)
-					secondGameInfo.playerLied();
+				break;
+			case 2:
+				secondGameInfo.playerLied();
+				break;
+			default:
+				thirdGamePlayerLies = true;
 			}
 
 			return true;
@@ -454,106 +469,130 @@ public class MyAgentUtils {
 	}
 
 	public LinkedList<Event> getSecondGameGreetMessages() {
-		PlayerCooperation cooperation = getFirstGameCooperationPoints();
-		PlayerBehavior politeBehavior = getFirstGamePolitePoints();
-		LinkedList<Event>events = new LinkedList<Event>();
-
-		switch(politeBehavior) {
-		case RUDE:
-			dealWithRude(cooperation, events);
-			break;
-		case NOT_POLITE:
-			dealWithNotPolite(cooperation, events);
-			break;
-		case POLITE:
-			dealWithPolite(cooperation, events);
-			break;
-		default:
-			dealWithVeryPolite(cooperation, events);
-		}
-
-		return events;
+		return eventsBasedOnCooperationBehavior(getFirstGameCooperationPoints(), getFirstGamePolitePoints());
 	}
 
 	private void dealWithVeryPolite(PlayerCooperation cooperation, LinkedList<Event> events) {
+		Event startExpression = null;
 		Event preferenceEvent = null;
 		String message = null;
 
 		switch(cooperation) {
 		case LIER:
-			message = "You lied to me about your preferences in the previous game, I hope you will be more honest in this game...";
+			startExpression = getSadStartExpression();
+			message = "You lied to me about your preferences before, I hope you will be more honest in this game...";
 			break;
 		case NOT_COOPERATIVE:
 		case NEUTRAL:
-			message = "You were really nice to me in the previous game, as a token of gratitude, I will tell you about one of my preferences:";
+			startExpression = getHappyStartExpression();
+			message = "You were really nice to me before, as a token of gratitude, I will tell you about one of my preferences:";
 			preferenceEvent = getRandomPreference();
 			break;
 		default:
-			message = "You were really nice and cooperative in the previous game, so as a token of gratitude, I will do you two small favors.";
+			startExpression = getHappyStartExpression();
+			message = "You were really nice and cooperative before, so as a token of gratitude, I will do you two small favors.";
 			message += getModifiedLedgerFromBehavior(-2);
 		}
 
-		sendEvents(events, message, preferenceEvent);
+		sendEvents(events, message, preferenceEvent, startExpression);
 	}
 
 	private void dealWithPolite(PlayerCooperation cooperation, LinkedList<Event> events) {
 		Event preferenceEvent = null;
+		Event startExpression = null;
 		String message = null;
 
 		switch(cooperation) {
 		case LIER:
-			message =  "You lied to me about your preferences in the previous game .. Could you tell me about your real preferences now?";
+			startExpression = getSadStartExpression();
+			message =  "You lied to me about your preferences before .. Could you tell me about your real preferences now?";
 			break;
 		case NOT_COOPERATIVE:
-			message = "I Hope you will be more cooperative in this game more than the previous one...";
+			startExpression = getSadStartExpression();
+			message = "I Hope you will be more cooperative in this game than before...";
 			break;
 		case NEUTRAL:
-			message = "You were nice to me in the previous game, as a token of gratitude, I will tell you about one of my preferences:";
+			startExpression = getHappyStartExpression();
+			message = "You were nice to me before, as a token of gratitude, I will tell you about one of my preferences:";
 			preferenceEvent = getRandomPreference();
+			break;
 		default:
-			message = "You were nice and cooperative in the previous game, so as a token of gratitude, I will do you a small favor.";
+			startExpression = getHappyStartExpression();
+			message = "You were nice and cooperative before, so as a token of gratitude, I will do you a small favor.";
 			message += getModifiedLedgerFromBehavior(-1);
 		}
 
-		sendEvents(events, message, preferenceEvent);
+		sendEvents(events, message, preferenceEvent, startExpression);
+	}
+
+	private Event getHappyStartExpression() {
+		String happyExpression = ((MyCoreAgent) agent).happyExpression();
+
+		return getStartExpression(happyExpression);
+	}
+
+	private Event getSadStartExpression() {
+		String sadExpression = ((MyCoreAgent) agent).sadExpression();
+
+		return getStartExpression(sadExpression);
+	}
+
+	private Event getStartExpression(String expression) {
+		GameSpec game = currentGameAgentUtils.getGame();
+
+		return new Event(this.getID(), Event.EventClass.SEND_EXPRESSION, expression, 8000, (int) (700*game.getMultiplier()));
 	}
 
 	private Event getRandomPreference() {
 		return ((MyCoreAgent) agent).getRandomPreference();
 	}
 
-	private void sendEvents(LinkedList<Event> events, String message, Event preferenceEvent) {
+	private void sendEvents(LinkedList<Event> events, String message, Event preferenceEvent, Event expression) {
 		GameSpec game = currentGameAgentUtils.getGame();
 		Event messageEvent = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.NONE, message, (int) (2000*game.getMultiplier()));
 
+		if(expression != null)
+			events.add(expression);
+
 		events.add(messageEvent);
 
-		if(preferenceEvent != null) 
+		if(preferenceEvent != null) {
+			String requestMessage = "Can you also send me one of your preferences now?";
+			Event requestEvent = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.PREF_REQUEST, requestMessage, (int) 
+					(2000*game.getMultiplier()));
+
 			events.add(preferenceEvent);
+			events.add(requestEvent);
+		}
 	}
 
 	private void dealWithNotPolite(PlayerCooperation cooperation, LinkedList<Event> events) {
+		Event startExpression = null;
 		Event preferenceEvent = null;
 		String message = null;
 
 		switch(cooperation) {
 		case LIER:
-			message =  "You lied to me about your preferences in the previous game.. as far as he I concern, you owe me a small favor.";
+			startExpression = getSadStartExpression();
+			message =  "You lied to me about your preferences before.. as far as I concern, you owe me a small favor.";
 			message += getModifiedLedgerFromBehavior(1);
 			break;
 		case NOT_COOPERATIVE:
-			message =  "You weren't very polite or cooperaive in the previous game.. I'm willing to forget about it if you'll tell me about "
+			startExpression = getSadStartExpression();
+			message =  "You weren't very polite or cooperaive before.. I'm willing to forget about it if you'll tell me about "
 					+ "your preferences..";
 			break;
 		case NEUTRAL:
-			message =  "You weren't really polite to me in the previous game, hope you will be more polite in the upcoming game";
+			startExpression = getSadStartExpression();
+			message =  "You weren't really polite to me before, hope you will be more polite in the upcoming game";
 			break;
 		default:
-			message = "You were cooperative in the previous game, as a token of gratitude, I will tell you about one of my preferences:";
+			startExpression = getHappyStartExpression();
+			message = "You were cooperative before, as a token of gratitude, I will tell you about one of my preferences:";
 			preferenceEvent = getRandomPreference();
 		}
 
-		sendEvents(events, message, preferenceEvent);
+		sendEvents(events, message, preferenceEvent, startExpression);
 	}
 
 	private String getModifiedLedgerFromBehavior(int favors) {
@@ -585,28 +624,39 @@ public class MyAgentUtils {
 	}
 
 	private void dealWithRude(PlayerCooperation cooperation, LinkedList<Event> events) {
+		Event startExpression = null;
 		String message = null;
 
 		switch(cooperation) {
 		case LIER:
-			message = "You lied to me in the previous game. In addition to that, you were also rude. as far as he I concern, you owe me two small "
+			startExpression = getAngryStartExpression();
+			message = "You lied to me about your preferences before. In addition to that, you were also rude. as far as he I concern, you owe me two small "
 					+ "favors.";
 			message += getModifiedLedgerFromBehavior(2);
 			break;
 		case NOT_COOPERATIVE:
-			message = "You were rude to me in the previous game. In addition to that, you weren't really cooperaitve. as far as he I concern, "
+			startExpression = getSadStartExpression();
+			message = "You were rude to me before. In addition to that, you weren't really cooperaitve. as far as he I concern, "
 					+ "you owe me a small favor.";
 			message += getModifiedLedgerFromBehavior(1);
 			break;
 		case NEUTRAL:
-			message = "You were rude to me in the previous game. .. I'm willing to forget about it if you tell me about one of your preferences..";
+			startExpression = getSadStartExpression();
+			message = "You were rude to me before. .. I'm willing to forget about it if you tell me about one of your preferences..";
 			break;
 		default:
-			message = "You weren't really polite to me in the previous game, hope you will be more polite in the upcoming game";
+			startExpression = getSadStartExpression();
+			message = "You weren't really polite to me before, hope you will be more polite in the upcoming game";
 			break;
 		}
 
-		sendEvents(events, message, null);
+		sendEvents(events, message, null, startExpression);
+	}
+
+	private Event getAngryStartExpression() {
+		String angryExpression = ((MyCoreAgent) agent).angryExpression();
+
+		return getStartExpression(angryExpression);
 	}
 
 	private PlayerBehavior getFirstGamePolitePoints() {
@@ -711,5 +761,36 @@ public class MyAgentUtils {
 	public int getAgentCurrentGamePreferencesSize() {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	public LinkedList<Event> getThirdGameGreetMessages() {
+		PlayerCooperation cooperation = GameInfo.getTotalCooperationPoints(firstGameInfo.cooperative(), secondGameInfo.cooperative());
+		PlayerBehavior behavior = GameInfo.getTotalBehaviorPoints(firstGameInfo.behavior(), secondGameInfo.behavior());
+
+		return eventsBasedOnCooperationBehavior(cooperation, behavior);
+	}
+
+	private LinkedList<Event> eventsBasedOnCooperationBehavior(PlayerCooperation cooperation, PlayerBehavior behavior) {
+		LinkedList<Event>events = new LinkedList<Event>();
+
+		switch(behavior) {
+		case RUDE:
+			dealWithRude(cooperation, events);
+			break;
+		case NOT_POLITE:
+			dealWithNotPolite(cooperation, events);
+			break;
+		case POLITE:
+			dealWithPolite(cooperation, events);
+			break;
+		default:
+			dealWithVeryPolite(cooperation, events);
+		}
+
+		return events;
+	}
+
+	public void resetPlayerPreferences() {
+		currentPlayerPreferences = new LinkedList<Preference>();
 	}
 }

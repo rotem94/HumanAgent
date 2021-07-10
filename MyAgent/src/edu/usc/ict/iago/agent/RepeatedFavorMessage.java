@@ -156,7 +156,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 	}
 
 	public String getContradictionResponse(String drop) {
-		return "I'm sorry.  I must be misunderstanding.  Earlier, you said: " + drop + " Was that not correct?";
+		return "Earlier, you said: " + drop + " Did you lie to me??";
 	}
 
 	@Override

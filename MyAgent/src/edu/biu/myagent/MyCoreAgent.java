@@ -146,7 +146,7 @@ public abstract class MyCoreAgent extends GeneralVH
 	public void modifyLedgerAfterGame(int incerement) {
 		myLedger.ledgerValue += incerement;
 	}
-	
+
 	/**
 	 * Returns a simple int representing the current game count. 
 	 * @return the game number (starting with 1)
@@ -229,38 +229,14 @@ public abstract class MyCoreAgent extends GeneralVH
 			utils.addPlayerThreat();
 
 		if (e.getPreference() == null) 
-		{
 			p = null;
-		} else {
+		else {
 			p = new Preference(e.getPreference().getIssue1(), e.getPreference().getIssue2(), e.getPreference().getRelation(), e.getPreference().isQuery());
 		}
 
-		if (p != null && !p.isQuery()) //a preference was expressed
-		{
-			utils.addPref(p, currentGameCount);
-
-			if(utils.reconcileContradictions(currentGameCount))
-			{
-				//we simply drop the oldest expressed preference until we are reconciled.  This is not the best method, as it may not be the the most efficient route.
-				LinkedList<String> dropped = new LinkedList<String>();
-				dropped.add(IAGOCoreMessage.prefToEnglish(utils.dequeuePref(), game));
-				int overflowCount = 0;
-				while(utils.reconcileContradictions(currentGameCount) && overflowCount < 5)
-				{
-					dropped.add(IAGOCoreMessage.prefToEnglish(utils.dequeuePref(), game));
-					overflowCount++;
-				}
-				String drop = "";
-				for (String s: dropped)
-					drop += "\"" + s + "\", and ";
-
-				drop = drop.substring(0, drop.length() - 6);//remove last 'and'
-
-				Event e1 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.CONFUSION,
-						messages.getContradictionResponse(drop), (int) (2000*game.getMultiplier()));
-				e1.setFlushable(false);
-				addEventWithTypingBefore(resp, e1);
-			}
+		if (p != null && !p.isQuery()) {//a preference was expressed
+			if(!playerSentTruePreference(p, resp))
+				return resp;
 		}
 
 		String expr = expression.getExpression(getHistory());
@@ -403,6 +379,58 @@ public abstract class MyCoreAgent extends GeneralVH
 		}
 
 		return resp;
+	}
+
+	private boolean playerSentTruePreference(Preference p, LinkedList<Event> resp) {
+		utils.addPref(p, currentGameCount);
+
+		if(utils.reconcileContradictions(currentGameCount)) {
+			reconcileAgentTrust(resp);
+
+			utils.resetPlayerPreferences();
+
+			return false;
+		}
+
+		return true;
+	}
+
+	private void reconcileAgentTrust(LinkedList<Event> resp) {
+		LinkedList<String> dropped = new LinkedList<String>();
+		dropped.add(IAGOCoreMessage.prefToEnglish(utils.dequeuePref(), game));
+		int overflowCount = 0;
+
+		while(utils.reconcileContradictions(currentGameCount) && overflowCount < 5)
+		{
+			dropped.add(IAGOCoreMessage.prefToEnglish(utils.dequeuePref(), game));
+			overflowCount++;
+		}
+
+		String drop = "";
+
+		for (String s: dropped)
+			drop += "\"" + s + "\", and ";
+
+		drop = drop.substring(0, drop.length() - 6);//remove last 'and'
+
+		Event e1 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.CONFUSION,
+				messages.getContradictionResponse(drop), (int) (2000*game.getMultiplier()));
+		e1.setFlushable(false);
+
+		String cannotBeTrusted = "I don't know if I could trust you again in the current nagotiation...";
+
+		Event e2 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.GENERIC_NEG, cannotBeTrusted, 
+				(int) (2000*game.getMultiplier()));
+
+		sendAgentAngryExpression(resp);
+		addEventWithTypingBefore(resp, e1);
+		addEventWithTypingBefore(resp, e2);
+	}
+
+	private void sendAgentAngryExpression(LinkedList<Event> resp) {
+		Event eExpr = new Event(this.getID(), Event.EventClass.SEND_EXPRESSION, expression.getAngryEmotion(), 10000, (int) (700*game.getMultiplier()));
+
+		addEventWithTypingBefore(resp, eExpr);
 	}
 
 	private LinkedList<Event> dealWithOffer(LinkedList<Event> resp, Event e) {
@@ -551,7 +579,8 @@ public abstract class MyCoreAgent extends GeneralVH
 	}
 
 	private LinkedList<Event> dealWithDelay(LinkedList<Event> resp, Event e) {
-		advertiseThirdGame(resp);
+		if(noResponse >= 1)
+			advertiseThirdGame(resp);
 
 		noResponse += 1;
 
@@ -738,9 +767,14 @@ public abstract class MyCoreAgent extends GeneralVH
 
 		if(currentGameCount > 1)
 		{
-			LinkedList<Event>secondGameStartEvents = utils.getSecondGameGreetMessages();
+			LinkedList<Event>secondThirdgameStartEvent;
 
-			for (Event event : secondGameStartEvents) 
+			if(currentGameCount == 2)
+				secondThirdgameStartEvent = utils.getSecondGameGreetMessages();
+			else
+				secondThirdgameStartEvent = utils.getThirdGameGreetMessages();
+
+			for (Event event : secondThirdgameStartEvent) 
 				addEventWithTypingBefore(resp, event);
 		}
 		else {
@@ -750,7 +784,7 @@ public abstract class MyCoreAgent extends GeneralVH
 			Event cooperateEvent = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.NONE, preferenceStr, 
 					(int) (1000*game.getMultiplier()));
 			Event prefToSend = getRandomPreference();
-			Event playerCooperateEvent = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.NONE, sendYourPrefStr, 
+			Event playerCooperateEvent = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.PREF_REQUEST, sendYourPrefStr, 
 					(int) (1000*game.getMultiplier()));
 
 			addEventWithTypingBefore(resp, cooperateEvent);
@@ -798,6 +832,18 @@ public abstract class MyCoreAgent extends GeneralVH
 	 */
 	@Override
 	public abstract String getArtName();
+
+	public String sadExpression() {
+		return expression.getUnfairEmotion();
+	}
+
+	public String happyExpression() {
+		return expression.getFairEmotion();
+	}
+
+	public String angryExpression() {
+		return expression.getAngryEmotion();
+	}
 
 	/**
 	 * This is the method that dictates what users read when they negotiate with your agent. An agent developer can implement

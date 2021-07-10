@@ -77,7 +77,7 @@ public class GameInfo {
 		else 
 			cooperationPoints = (float) (getPlayerPreferencesSize() * PLAYER_PREFS_BONUS_PERCENT) - (float) (getAgentPreferencesSize());
 
-		if(cooperationPoints >= 3)
+		if(cooperationPoints >= 1.5)
 			return PlayerCooperation.COOPERATIVE;
 
 		if(cooperationPoints > 0)
@@ -102,5 +102,109 @@ public class GameInfo {
 			return PlayerBehavior.NOT_POLITE;
 
 		return PlayerBehavior.RUDE;
+	}
+
+	public static PlayerCooperation getTotalCooperationPoints(PlayerCooperation firstGameCooperation, PlayerCooperation secondGameCooperation) {
+		switch(firstGameCooperation) {
+		case LIER:
+			return getTotalCooperationFirstLier(secondGameCooperation);
+		case NOT_COOPERATIVE:
+			return getTotalCooperationFirstNotCooperative(secondGameCooperation);
+		case NEUTRAL:
+			return secondGameCooperation;
+		default:
+			return getTotalCooperationFirstCooperative(secondGameCooperation);
+		}
+	}
+
+	private static PlayerCooperation getTotalCooperationFirstCooperative(PlayerCooperation secondGameCooperation) {
+		switch(secondGameCooperation) {
+		case LIER:
+			return PlayerCooperation.LIER;
+		case NOT_COOPERATIVE:
+			return PlayerCooperation.NEUTRAL;
+		default:
+			return PlayerCooperation.COOPERATIVE;
+		}
+	}
+
+	private static PlayerCooperation getTotalCooperationFirstNotCooperative(PlayerCooperation secondGameCooperation) {
+		switch(secondGameCooperation) {
+		case LIER:
+			return PlayerCooperation.LIER;
+		case NOT_COOPERATIVE:
+			return PlayerCooperation.NOT_COOPERATIVE;
+		default:
+			return PlayerCooperation.NEUTRAL;
+		}
+	}
+
+	private static PlayerCooperation getTotalCooperationFirstLier(PlayerCooperation secondGameCooperation) {
+		switch(secondGameCooperation) {
+		case LIER:
+			return PlayerCooperation.LIER;
+		case NOT_COOPERATIVE:
+		case NEUTRAL:
+			return PlayerCooperation.NOT_COOPERATIVE;
+		default:
+			return PlayerCooperation.NEUTRAL;
+		}
+	}
+
+	public static PlayerBehavior getTotalBehaviorPoints(PlayerBehavior firstGameBehavior, PlayerBehavior secondGameBehavior) {
+		switch(firstGameBehavior) {
+		case RUDE:
+			return getTotalBehaviorFirstRude(secondGameBehavior);
+		case NOT_POLITE:
+			return getTotalBehaviorFirstNotPolite(secondGameBehavior);
+		case POLITE:
+			return getTotalBehaviorFirstPolite(secondGameBehavior);
+		default:
+			return getTotalBehaviorFirstVeryPolite(secondGameBehavior);
+		}
+	}
+
+	private static PlayerBehavior getTotalBehaviorFirstVeryPolite(PlayerBehavior secondGameBehavior) {
+		switch(secondGameBehavior) {
+		case RUDE:
+			return PlayerBehavior.NOT_POLITE;
+		case NOT_POLITE:
+			return PlayerBehavior.POLITE;
+		default:
+			return PlayerBehavior.VERY_POLITE;
+		}
+	}
+
+	private static PlayerBehavior getTotalBehaviorFirstPolite(PlayerBehavior secondGameBehavior) {
+		switch(secondGameBehavior) {
+		case RUDE:
+		case NOT_POLITE:
+			return PlayerBehavior.NOT_POLITE;
+		case POLITE:
+			return PlayerBehavior.POLITE;
+		default:
+			return PlayerBehavior.VERY_POLITE;
+		}
+	}
+
+	private static PlayerBehavior getTotalBehaviorFirstNotPolite(PlayerBehavior secondGameBehavior) {
+		switch(secondGameBehavior) {
+		case RUDE:
+		case NOT_POLITE:
+			return PlayerBehavior.RUDE;
+		default:
+			return PlayerBehavior.POLITE;
+		}
+	}
+
+	private static PlayerBehavior getTotalBehaviorFirstRude(PlayerBehavior secondGameBehavior) {
+		switch(secondGameBehavior) {
+		case RUDE:
+			return PlayerBehavior.RUDE;
+		case NOT_POLITE:
+			return PlayerBehavior.NOT_POLITE;
+		default:
+			return PlayerBehavior.POLITE;
+		}
 	}
 }
