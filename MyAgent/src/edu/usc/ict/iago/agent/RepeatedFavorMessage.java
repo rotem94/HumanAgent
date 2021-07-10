@@ -395,7 +395,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 		case PREF_SPECIFIC_REQUEST:	
 		case PREF_WITHHOLD:
 			/*if(p != null && !p.isQuery()) {
-				if(utils.getTotalSentPreferences() >= utils.playerTotalPreferencesSize())
+				if(utils.getAgentCurrentGamePreferencesSize() >= utils.getPlayerPreferencesSize())
 					return null;
 			}
 			else {
@@ -535,7 +535,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 			}
 			else if (paysLedger && utils.getLedger() < 0)
 			{
-				str += "Sure, since you did me that favor before, I'm happy to help this round.";
+				str += "Sure, I owe you one. I'm happy to help this round.";
 				utils.modifyVerbalLedger(1);
 				sc = Event.SubClass.FAVOR_ACCEPT;				
 			}

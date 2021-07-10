@@ -1,6 +1,5 @@
 package edu.biu.myagent;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import javax.websocket.Session;
 import edu.usc.ict.iago.agent.IAGOCoreBehavior;
@@ -19,6 +18,8 @@ import edu.usc.ict.iago.utils.Event.SubClass;
 
 public abstract class MyCoreAgent extends GeneralVH
 {
+	private final Event typingEvent = new Event(this.getID(), Event.EventClass.OFFER_IN_PROGRESS, 0);
+
 	private Offer lastOfferReceived;
 	private Offer lastOfferSent;
 	private Offer favorOffer; //the favor offer
@@ -28,10 +29,9 @@ public abstract class MyCoreAgent extends GeneralVH
 	private IAGOCoreMessage messages;
 	private MyAgentUtils utils;
 	private boolean timeFlag = false;
-	private boolean firstFlag = false;
 	private int noResponse = 0;
+	private boolean toAdvertiseThirdGame = true;
 	private boolean noResponseFlag = false;
-	private boolean disable = false;	//adding a disabler check to help with agent vs. P++ functionality (note this will only be added to corevh and not the ++ version)
 	private int currentGameCount = 0;
 	private Ledger myLedger = new Ledger();
 
@@ -61,12 +61,12 @@ public abstract class MyCoreAgent extends GeneralVH
 
 		MyAgentUtils aue = new MyAgentUtils(this);
 		aue.configureGame(game, currentGameCount + 1);
-		
+
 		this.utils = aue;
 		this.expression = expression;
 		this.messages = messages;
 		this.behavior = behavior;
-		
+
 		aue.setAgentBelief(this.behavior.getAgentBelief());
 
 		this.messages.setUtils(utils);
@@ -143,6 +143,10 @@ public abstract class MyCoreAgent extends GeneralVH
 		ServletUtils.log("Finalization Event! Current Ledger: v:" + myLedger.verbalLedger + ", o:" + myLedger.offerLedger + ", main:" + myLedger.ledgerValue, ServletUtils.DebugLevels.DEBUG);
 	}
 
+	public void modifyLedgerAfterGame(int incerement) {
+		myLedger.ledgerValue += incerement;
+	}
+	
 	/**
 	 * Returns a simple int representing the current game count. 
 	 * @return the game number (starting with 1)
@@ -178,15 +182,10 @@ public abstract class MyCoreAgent extends GeneralVH
 
 		if(e.getType().equals(Event.EventClass.OFFER_IN_PROGRESS)) 
 		{	
-			disable = true;
 			ServletUtils.log("Agent is currently being restrained", ServletUtils.DebugLevels.DEBUG);
 
 			return resp;
 		}
-
-		//should we lead with an offer?
-		if(!firstFlag && !this.disable)
-			resp = leadWithOffer(resp, e);
 
 		//what to do when player sends an expression -- react to it with text and our own expression
 		if(e.getType().equals(Event.EventClass.SEND_EXPRESSION))
@@ -209,6 +208,18 @@ public abstract class MyCoreAgent extends GeneralVH
 			return dealWithMessage(resp, e);
 
 		return resp;
+	}
+
+	private void advertiseThirdGame(LinkedList<Event> resp) {
+		if(!toAdvertiseThirdGame || currentGameCount != 2)
+			return;
+
+		toAdvertiseThirdGame = false;
+
+		String message = "I just wanted to tell you, that if you'll stay for a third game, I'll owe you a favor. So, it will be worth for you to stay!";
+		Event advertiseEvent = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.NONE, message, (int) (1000*game.getMultiplier()));
+
+		addEventWithTypingBefore(resp, advertiseEvent);
 	}
 
 	private LinkedList<Event> dealWithMessage(LinkedList<Event> resp, Event e) {
@@ -248,7 +259,7 @@ public abstract class MyCoreAgent extends GeneralVH
 				Event e1 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.CONFUSION,
 						messages.getContradictionResponse(drop), (int) (2000*game.getMultiplier()));
 				e1.setFlushable(false);
-				resp.add(e1);
+				addEventWithTypingBefore(resp, e1);
 			}
 		}
 
@@ -256,7 +267,7 @@ public abstract class MyCoreAgent extends GeneralVH
 		if (expr != null) 
 		{
 			Event e0 = new Event(this.getID(), Event.EventClass.SEND_EXPRESSION, expr, 2000, (int) (700*game.getMultiplier()));
-			resp.add(e0);
+			addEventWithTypingBefore(resp, e0);
 		}
 
 
@@ -268,9 +279,9 @@ public abstract class MyCoreAgent extends GeneralVH
 			{
 				String s1 = messages.getProposalLang(getHistory(), game);
 				Event e1 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_PROPOSE, s1, (int) (2000*game.getMultiplier()));
-				resp.add(e0);
-				resp.add(e1);
-				resp.add(e2);
+				addEventWithTypingBefore(resp, e0);
+				addEventWithTypingBefore(resp, e1);
+				addEventWithTypingBefore(resp, e2);
 				this.lastOfferSent = e2.getOffer();
 				if(favorOfferIncoming)
 				{
@@ -279,7 +290,7 @@ public abstract class MyCoreAgent extends GeneralVH
 				}
 			} 
 		} else {
-			resp.add(e0);
+			addEventWithTypingBefore(resp, e0);
 		}
 
 
@@ -297,7 +308,7 @@ public abstract class MyCoreAgent extends GeneralVH
 				String walkAway = "Actually, I won't be able to offer you anything that gives you " + utils.getAdversaryBATNA() + " points. I think I'm going to have to walk "
 						+ "away, unless you were lying.";
 				Event e2 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.THREAT_NEG, utils.getAdversaryBATNA(), walkAway, (int) (2000*game.getMultiplier()));
-				resp.add(e2);
+				addEventWithTypingBefore(resp, e2);
 			}
 			else 
 			{
@@ -310,25 +321,27 @@ public abstract class MyCoreAgent extends GeneralVH
 					{
 						response += " Are you sure you can't accept anything less than " + utils.getAdversaryBATNA() + " points?";
 						e4 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.BATNA_REQUEST, utils.getAdversaryBATNA(), response, (int) (2000*game.getMultiplier()));
-					}					
-					resp.add(e4);
+					}		
+					addEventWithTypingBefore(resp, e4);
 					ServletUtils.log("Null Offer", ServletUtils.DebugLevels.DEBUG);
 				}
 				else 
 				{
 					Event e3 = new Event(this.getID(), Event.EventClass.OFFER_IN_PROGRESS, 0);
-					resp.add(e3);
+					addEventWithTypingBefore(resp, e3);
 
-					Event e4 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_PROPOSE, messages.getProposalLang(getHistory(), game), (int) (1000*game.getMultiplier()));
-					resp.add(e4);
+					Event e4 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_PROPOSE, messages.getProposalLang(getHistory(), 
+							game), (int) (1000*game.getMultiplier()));
+					addEventWithTypingBefore(resp, e4);
 					this.lastOfferSent = e2.getOffer();
+
 					if(favorOfferIncoming)
 					{
 						favorOffer = lastOfferSent;
 						favorOfferIncoming = false;
 					}
-					resp.add(e2);
 
+					addEventWithTypingBefore(resp, e2);
 				}
 			}
 		}
@@ -348,16 +361,20 @@ public abstract class MyCoreAgent extends GeneralVH
 			if(e2.getOffer() != null)
 			{
 				Event e3 = new Event(this.getID(), Event.EventClass.OFFER_IN_PROGRESS, 0);
-				resp.add(e3);
-				Event e4 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_PROPOSE, messages.getProposalLang(getHistory(), game), (int) (1000*game.getMultiplier()));
-				resp.add(e4);
+				addEventWithTypingBefore(resp, e3);
+
+				Event e4 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_PROPOSE, messages.getProposalLang(getHistory(),
+						game), (int) (1000*game.getMultiplier()));
+				addEventWithTypingBefore(resp, e4);
 				this.lastOfferSent = e2.getOffer();
+
 				if(favorOfferIncoming)
 				{
 					favorOffer = lastOfferSent;
 					favorOfferIncoming = false;
 				}
-				resp.add(e2);		
+
+				addEventWithTypingBefore(resp, e2);
 			}
 		}
 
@@ -370,9 +387,10 @@ public abstract class MyCoreAgent extends GeneralVH
 			if(e2.getOffer() != null)
 			{
 				Event e3 = new Event(this.getID(), Event.EventClass.OFFER_IN_PROGRESS, 0);
-				resp.add(e3);
-				Event e4 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_PROPOSE, messages.getProposalLang(getHistory(), game), (int) (1000*game.getMultiplier()));
-				resp.add(e4);
+				addEventWithTypingBefore(resp, e3);
+				Event e4 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_PROPOSE, messages.getProposalLang(getHistory(), 
+						game), (int) (1000*game.getMultiplier()));
+				addEventWithTypingBefore(resp, e4);
 				this.lastOfferSent = e2.getOffer();
 				if(favorOfferIncoming)
 				{
@@ -380,7 +398,7 @@ public abstract class MyCoreAgent extends GeneralVH
 					favorOfferIncoming = false;
 				}
 
-				resp.add(e2);	
+				addEventWithTypingBefore(resp, e2);
 			}
 		}
 
@@ -438,25 +456,28 @@ public abstract class MyCoreAgent extends GeneralVH
 			if (expr != null)
 			{
 				Event eExpr = new Event(this.getID(), Event.EventClass.SEND_EXPRESSION, expr, 2000, (int) (700*game.getMultiplier()));
-				resp.add(eExpr);
+				addEventWithTypingBefore(resp, eExpr);
 			}
 			Event e0 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_REJECT, messages.getSemiFairResponse(), (int) (700*game.getMultiplier()));
-			resp.add(e0);
+			addEventWithTypingBefore(resp, e0);
 			behavior.updateAdverseEvents(1);
 			Event e3 = new Event(this.getID(), Event.EventClass.SEND_OFFER, behavior.getNextOffer(getHistory()),  (int) (700*game.getMultiplier()));
+			addEventWithTypingBefore(resp, e3);
 			if(e3.getOffer() != null)
 			{
 				Event e1 = new Event(this.getID(), Event.EventClass.OFFER_IN_PROGRESS, 0);
-				resp.add(e1);
+				addEventWithTypingBefore(resp, e1);
 				Event e2 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_PROPOSE, messages.getProposalLang(getHistory(), game),  (int) (3000*game.getMultiplier()));
-				resp.add(e2);
+				addEventWithTypingBefore(resp, e2);
+
 				this.lastOfferSent = e3.getOffer();
 				if(favorOfferIncoming)
 				{
 					favorOffer = lastOfferSent;
 					favorOfferIncoming = false;
 				}
-				resp.add(e3);
+
+				addEventWithTypingBefore(resp, e3);
 			}
 		}
 		else if(localFair && totalFair)
@@ -465,19 +486,19 @@ public abstract class MyCoreAgent extends GeneralVH
 			if (expr != null) 
 			{
 				Event eExpr = new Event(this.getID(), Event.EventClass.SEND_EXPRESSION, expr, 2000, (int) (700*game.getMultiplier()));
-				resp.add(eExpr);
+				addEventWithTypingBefore(resp, eExpr);
 			}
 			Event e0 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_ACCEPT, messages.getVHAcceptLang(getHistory(), game), (int) (700*game.getMultiplier()));
 
-			resp.add(e0);
+			addEventWithTypingBefore(resp, e0);
 			ServletUtils.log("ACCEPTED OFFER!", ServletUtils.DebugLevels.DEBUG);
 			behavior.updateAllocated(this.lastOfferReceived);
 
 			Event eFinalize = new Event(this.getID(), Event.EventClass.FORMAL_ACCEPT, 0);
-			
+
 			if(utils.isFullOffer(o)) {
-				resp.add(eFinalize);
-				
+				addEventWithTypingBefore(resp, eFinalize);
+
 				updateGameInfo(o);
 			}
 		}
@@ -488,7 +509,7 @@ public abstract class MyCoreAgent extends GeneralVH
 			if (expr != null) 
 			{
 				Event eExpr = new Event(this.getID(), Event.EventClass.SEND_EXPRESSION, expr, 2000, (int) (700*game.getMultiplier()));
-				resp.add(eExpr);
+				addEventWithTypingBefore(resp, eExpr);
 			}
 
 			Event e0 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_REJECT, messages.getVHRejectLang(getHistory(), game), (int) (700*game.getMultiplier()));
@@ -496,25 +517,31 @@ public abstract class MyCoreAgent extends GeneralVH
 			if (localEqual)
 				e0 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_REJECT, messages.getVHEqualLang(), (int) (700*game.getMultiplier()));
 
-			resp.add(e0);	
+			addEventWithTypingBefore(resp, e0);
 			behavior.updateAdverseEvents(1);
 			Event e3 = new Event(this.getID(), Event.EventClass.SEND_OFFER, behavior.getNextOffer(getHistory()), (int) (700*game.getMultiplier()));
 
 			if(e3.getOffer() != null)
 			{
 				Event e1 = new Event(this.getID(), Event.EventClass.OFFER_IN_PROGRESS, 0);
-				resp.add(e1);
-				Event e2 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_PROPOSE, messages.getProposalLang(getHistory(), game),  (int) (3000*game.getMultiplier()));
-				resp.add(e2);
+				addEventWithTypingBefore(resp, e1);
+				Event e2 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_PROPOSE, messages.getProposalLang(getHistory(), 
+						game),  (int) (3000*game.getMultiplier()));
+				addEventWithTypingBefore(resp, e2);
+
 				this.lastOfferSent = e3.getOffer();
+
 				if(favorOfferIncoming)
 				{
 					favorOffer = lastOfferSent;
 					favorOfferIncoming = false;
 				}
-				resp.add(e3);
+
+				addEventWithTypingBefore(resp, e3);
 			}
 		}
+
+		advertiseThirdGame(resp);
 
 		return resp;
 	}
@@ -524,6 +551,8 @@ public abstract class MyCoreAgent extends GeneralVH
 	}
 
 	private LinkedList<Event> dealWithDelay(LinkedList<Event> resp, Event e) {
+		advertiseThirdGame(resp);
+
 		noResponse += 1;
 
 		for(int i = getHistory().getHistory().size() - 1 ; i > 0 && i > getHistory().getHistory().size() - 6; i--)//if something from anyone for four time intervals
@@ -544,9 +573,11 @@ public abstract class MyCoreAgent extends GeneralVH
 				{
 					String s1 = messages.getProposalLang(getHistory(), game);
 					Event e1 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_PROPOSE, s1, (int) (2000*game.getMultiplier()));
-					resp.add(e0);
-					resp.add(e1);
-					resp.add(e2);
+
+					addEventWithTypingBefore(resp, e0);
+					addEventWithTypingBefore(resp, e1);
+					addEventWithTypingBefore(resp, e2);
+
 					this.lastOfferSent = e2.getOffer();
 					if(favorOfferIncoming)
 					{
@@ -556,9 +587,7 @@ public abstract class MyCoreAgent extends GeneralVH
 				} 
 			}
 			else 
-			{
-				resp.add(e0);
-			}
+				addEventWithTypingBefore(resp, e0);
 
 			noResponseFlag = true;
 		}
@@ -569,10 +598,12 @@ public abstract class MyCoreAgent extends GeneralVH
 			if(e2.getOffer() != null)
 			{
 				Event e3 = new Event(this.getID(), Event.EventClass.OFFER_IN_PROGRESS, 0);
-				resp.add(e3);
-				Event e4 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_PROPOSE, messages.getProposalLang(getHistory(), game),  (int) (1000*game.getMultiplier()));
-				resp.add(e4);
-				resp.add(e2);
+				addEventWithTypingBefore(resp, e3);
+
+				Event e4 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_PROPOSE, messages.getProposalLang(getHistory(), 
+						game),  (int) (1000*game.getMultiplier()));
+				addEventWithTypingBefore(resp, e4);
+				addEventWithTypingBefore(resp, e2);
 			}
 		}
 
@@ -581,11 +612,14 @@ public abstract class MyCoreAgent extends GeneralVH
 		{
 			timeFlag = true;
 			Event e1 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.TIMING, messages.getEndOfTimeResponse(), (int) (700*game.getMultiplier()));
-			resp.add(e1);
+			addEventWithTypingBefore(resp, e1);
+
 			Event e2 = new Event(this.getID(), Event.EventClass.SEND_OFFER, behavior.getFinalOffer(getHistory()), 0); 
+
 			if(e2.getOffer() != null)
 			{
-				resp.add(e2);
+				addEventWithTypingBefore(resp, e2);
+
 				lastOfferSent = e2.getOffer();
 				if(favorOfferIncoming)
 				{
@@ -601,17 +635,17 @@ public abstract class MyCoreAgent extends GeneralVH
 			String str = "By the way, will you tell me a little about your preferences?";
 			Event e1 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.PREF_REQUEST, str, (int) (1000*game.getMultiplier()));
 			e1.setFlushable(false);
-			resp.add(e1);
+			addEventWithTypingBefore(resp, e1);
 		}
 
 		return resp;
 	}
 
 	private LinkedList<Event> dealWithFormalAccept(LinkedList<Event> resp) {
+		advertiseThirdGame(resp);
+
 		Event lastOffer = utils.lastEvent(getHistory().getHistory(), Event.EventClass.SEND_OFFER);
 		Event lastTime = utils.lastEvent(getHistory().getHistory(), Event.EventClass.TIME);
-
-		disable = false;
 
 		int totalItems = 0;
 
@@ -639,9 +673,10 @@ public abstract class MyCoreAgent extends GeneralVH
 			else
 			{
 				Event e1 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_REJECT, messages.getRejectLang(getHistory(), game), (int) (700*game.getMultiplier()));
-				resp.add(e1);
+				addEventWithTypingBefore(resp, e1);
+
 				behavior.updateAdverseEvents(1);
-				
+
 				return resp;					
 			}
 		}
@@ -651,10 +686,10 @@ public abstract class MyCoreAgent extends GeneralVH
 
 	private LinkedList<Event> agentFormalAcceptOffer(LinkedList<Event> resp, Offer offer) {
 		Event e0 = new Event(this.getID(), Event.EventClass.FORMAL_ACCEPT, 0);
-		resp.add(e0);
-		
+
+		addEventWithTypingBefore(resp, e0);
 		updateGameInfo(offer);
-		
+
 		return resp;
 	}
 
@@ -667,7 +702,7 @@ public abstract class MyCoreAgent extends GeneralVH
 		if (expr != null)
 		{
 			Event e1 = new Event(this.getID(), Event.EventClass.SEND_EXPRESSION, expr, 2000, (int) (700*game.getMultiplier()));
-			resp.add(e1);
+			addEventWithTypingBefore(resp, e1);
 		}
 
 		Event e0 = messages.getVerboseMessageResponse(getHistory(), game, e);
@@ -679,9 +714,11 @@ public abstract class MyCoreAgent extends GeneralVH
 			{
 				String s1 = messages.getProposalLang(getHistory(), game);
 				Event e1 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_PROPOSE, s1, (int) (2000*game.getMultiplier()));
-				resp.add(e0);
-				resp.add(e1);
-				resp.add(e2);
+
+				addEventWithTypingBefore(resp, e0);
+				addEventWithTypingBefore(resp, e1);
+				addEventWithTypingBefore(resp, e2);
+
 				this.lastOfferSent = e2.getOffer();
 				if(favorOfferIncoming)
 				{
@@ -691,43 +728,7 @@ public abstract class MyCoreAgent extends GeneralVH
 			}
 		} 
 		else if (e0 != null) 
-			resp.add(e0);
-
-		disable = false;
-
-		return resp;
-	}
-
-	private LinkedList<Event> leadWithOffer(LinkedList<Event> resp, Event e) {
-		/*String revealBATNA = "Just so you know, I already have an offer for " + utils.myPresentedBATNA + " points, so I won't accept anything less.   What about you?";
-		Event e5 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.BATNA_INFO, utils.myPresentedBATNA, revealBATNA,  (int) (1000*game.getMultiplier()));
-		resp.add(e5);*/
-		disable = false;
-
-		Event e6 = messages.getFavorBehavior(getHistory(), game, e);
-
-		if (e6 != null && (e6.getType() == EventClass.OFFER_IN_PROGRESS || e6.getSubClass() == Event.SubClass.FAVOR_ACCEPT)) 
-		{
-			Event e7 = new Event(this.getID(), Event.EventClass.SEND_OFFER, behavior.getNextOffer(getHistory()), (int) (700*game.getMultiplier())); 
-
-			if (e7.getOffer() != null)
-			{
-				String s1 = messages.getProposalLang(getHistory(), game);
-				Event e8 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_PROPOSE, s1, (int) (2000*game.getMultiplier()));
-				resp.add(e6);
-				resp.add(e7);
-				resp.add(e8);
-				this.lastOfferSent = e7.getOffer();
-
-				if(favorOfferIncoming)
-				{
-					favorOffer = lastOfferSent;
-					favorOfferIncoming = false;
-				}
-			} 
-		}
-		else 
-			resp.add(e6);
+			addEventWithTypingBefore(resp, e0);
 
 		return resp;
 	}
@@ -737,43 +738,55 @@ public abstract class MyCoreAgent extends GeneralVH
 
 		if(currentGameCount > 1)
 		{
-			ArrayList<Event>secondGameStartEvents = utils.getSecondGameGreetMessages();
+			LinkedList<Event>secondGameStartEvents = utils.getSecondGameGreetMessages();
 
 			for (Event event : secondGameStartEvents) 
-				resp.add(event);
+				addEventWithTypingBefore(resp, event);
 		}
 		else {
-			String preferenceStr = "Before we start nagotiating, I'll send you a preference of mine, to show you i'm cooperative:";
+			String preferenceStr = "Before we start nagotiating, I'll send you a preference of mine, to show you I'm cooperative:";
 			String sendYourPrefStr = "Can you send me one of your preferences now? So that I know that you are also cooperative...";
 
 			Event cooperateEvent = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.NONE, preferenceStr, 
 					(int) (1000*game.getMultiplier()));
-			Event prefToSend = messages.getRandomPreference(game);
+			Event prefToSend = getRandomPreference();
 			Event playerCooperateEvent = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.NONE, sendYourPrefStr, 
 					(int) (1000*game.getMultiplier()));
-			
-			resp.add(cooperateEvent);
-			resp.add(prefToSend);
-			resp.add(playerCooperateEvent);
+
+			addEventWithTypingBefore(resp, cooperateEvent);
+			addEventWithTypingBefore(resp, prefToSend);
+			addEventWithTypingBefore(resp, playerCooperateEvent);
 		}
+	}
+
+	private void addEventWithTypingBefore(LinkedList<Event> resp, Event event) {
+		if(event != null && event.getType() != EventClass.OFFER_IN_PROGRESS)
+			resp.add(typingEvent);
+
+		resp.add(event);
+	}
+
+	public Event getRandomPreference() {
+		return messages.getRandomPreference(game);
 	}
 
 	private void initData() {
 		currentGameCount++;
 
 		ServletUtils.log("Game number is now " + currentGameCount + "... reconfiguring!", ServletUtils.DebugLevels.DEBUG);
-		
-		disable = false;
+
 		timeFlag = false;
-		firstFlag = false;
 		noResponse = 0;
 		noResponseFlag = false;
 		myLedger.offerLedger = 0;
 		myLedger.verbalLedger = 0;
-		
+
 		if(currentGameCount != 1)
 			utils.resetAgentUtilsExtension(game, currentGameCount);
-		
+
+		this.messages.setUtils(utils);
+		this.behavior.setUtils(utils);	
+
 		utils.setMyPresentedBATNA(utils.getLyingBATNA(game, utils.LIE_THRESHOLD, messages.getLying(game)));
 	}
 

@@ -7,7 +7,6 @@ import edu.usc.ict.iago.utils.GameSpec;
 class ViralGameSpec extends GameSpec{
 	
 	
-	
 	ViralGameSpec(boolean privileged) 
 	{
 
@@ -67,6 +66,25 @@ class ViralGameSpec extends GameSpec{
 		
 		setIndexMenu(this.buildMenu());
 	}
+
+	/*private void getRandomPlularsAndSingulars(ArrayList<String> plurals, ArrayList<String> singulars) {
+		ArrayList<String>items = new ArrayList<String>();
+		int size = 4;
+		
+		items.add("lamps");
+		items.add("paintings");
+		items.add("boxes of records");
+		items.add("cuckoo clocks");
+		 
+		for (int i = 0; i < size; i++) {
+			int itemIndex = (int) Math.round(Math.random() * (items.size() - 1));
+			
+			plurals.add(items.get(itemIndex));
+			singulars.add(items.get(itemIndex));
+			
+			items.remove(itemIndex);
+		}
+	}*/
 
 	@Override
 	public boolean isAdvancedPoints() {
