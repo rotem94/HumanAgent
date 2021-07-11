@@ -1,11 +1,7 @@
 package edu.biu.myagent;
 
 import javax.websocket.Session;
-import edu.usc.ict.iago.agent.RepeatedFavorBehavior;
-import edu.usc.ict.iago.agent.RepeatedFavorExpression;
-import edu.usc.ict.iago.agent.RepeatedFavorMessage;
 import edu.usc.ict.iago.utils.GameSpec;
-
 
 /**
  * @author mell
@@ -23,8 +19,8 @@ public class MyAgent extends MyCoreAgent {
 	 */
 	public MyAgent(String name, GameSpec game, Session session)
 	{
-		super("UrsulaFavor", game, session, new RepeatedFavorBehavior(RepeatedFavorBehavior.LedgerBehavior.LIMITED), new RepeatedFavorExpression(), 
-				new RepeatedFavorMessage(false, false, RepeatedFavorBehavior.LedgerBehavior.LIMITED, game));	
+		super("AgentRotem", game, session, new MyBehavior(MyBehavior.LedgerBehavior.LIMITED), new MyExpressions(), 
+				new MyMessagesBehavior(false, false, MyBehavior.LedgerBehavior.LIMITED, game));	
 
 		super.safeForMultiAgent = true;
 	}

@@ -1,10 +1,11 @@
-package edu.usc.ict.iago.agent;
+package edu.biu.myagent;
 
+import edu.usc.ict.iago.agent.IAGOCoreExpression;
 import edu.usc.ict.iago.utils.Event;
 import edu.usc.ict.iago.utils.ExpressionPolicy;
 import edu.usc.ict.iago.utils.History;
 
-public class RepeatedFavorExpression extends IAGOCoreExpression implements ExpressionPolicy{
+public class MyExpressions extends IAGOCoreExpression implements ExpressionPolicy{
 
 	public String getSemiFairEmotion()
 	{

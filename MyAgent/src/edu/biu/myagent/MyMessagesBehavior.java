@@ -1,12 +1,11 @@
-package edu.usc.ict.iago.agent;
+package edu.biu.myagent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-
-import edu.biu.myagent.MyAgentUtils;
-import edu.usc.ict.iago.agent.RepeatedFavorBehavior.LedgerBehavior;
+import edu.biu.myagent.MyBehavior.LedgerBehavior;
+import edu.usc.ict.iago.agent.IAGOCoreMessage;
 import edu.usc.ict.iago.utils.Event;
 import edu.usc.ict.iago.utils.GameSpec;
 import edu.usc.ict.iago.utils.History;
@@ -17,7 +16,7 @@ import edu.usc.ict.iago.utils.Preference.Relation;
 import edu.usc.ict.iago.utils.ServletUtils;
 import edu.usc.ict.iago.utils.Event.SubClass;
 
-public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePolicy {
+public class MyMessagesBehavior extends IAGOCoreMessage implements MessagePolicy {
 	protected final String[] proposal = {"I think this deal is good for the both of us.", 
 			"I think you'll find this offer to be satisfactory.", 
 			"I think this arrangement is fair.", 
@@ -62,7 +61,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 
 	private boolean isWithholding;
 	private boolean lying;
-	private RepeatedFavorBehavior.LedgerBehavior lb;
+	private MyBehavior.LedgerBehavior lb;
 	private MyAgentUtils utils;
 	private int opponentBATNA = -1;
 	private int agentID;
@@ -82,7 +81,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 	 * @param lb an enum representing how the agent talks about favors
 	 * @param gs the gameSpec
 	 */
-	public RepeatedFavorMessage(boolean isWithholding, boolean lying, RepeatedFavorBehavior.LedgerBehavior lb, GameSpec gs) 
+	public MyMessagesBehavior(boolean isWithholding, boolean lying, MyBehavior.LedgerBehavior lb, GameSpec gs) 
 	{
 		this.isWithholding = isWithholding;
 		this.lying = lying;

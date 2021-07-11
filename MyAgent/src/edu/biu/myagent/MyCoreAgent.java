@@ -400,7 +400,7 @@ public abstract class MyCoreAgent extends GeneralVH
 	}
 
 	private void handlePlayerLie(LinkedList<Event> resp) {
-		String message = "You already lied to me in the current game about your preferences, I don't know if I should believe you now.";
+		String message = "You already lied to me before about your preferences, I don't know if I should believe you now.";
 
 		Event sadExpression = getSadAgentEvent();
 		Event lieEvent = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.NONE, message, (int) (2000*game.getMultiplier()));

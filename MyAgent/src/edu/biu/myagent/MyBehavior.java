@@ -1,18 +1,33 @@
-package edu.usc.ict.iago.agent;
+package edu.biu.myagent;
 
 import java.util.ArrayList;
-
-import edu.biu.myagent.MyAgentUtils;
+import edu.usc.ict.iago.agent.IAGOCoreBehavior;
 import edu.usc.ict.iago.utils.BehaviorPolicy;
 import edu.usc.ict.iago.utils.GameSpec;
 import edu.usc.ict.iago.utils.History;
 import edu.usc.ict.iago.utils.Offer;
 
-public class IAGOBuildingBehavior extends IAGOCoreBehavior implements BehaviorPolicy {
+public class MyBehavior extends IAGOCoreBehavior implements BehaviorPolicy {
 		
 	private MyAgentUtils utils;
 	private GameSpec game;	
 	private Offer allocated;
+	private LedgerBehavior lb = LedgerBehavior.NONE;
+	private int adverseEvents = 0;
+	
+	public enum LedgerBehavior
+	{
+		FAIR,
+		LIMITED,
+		BETRAYING,
+		NONE;
+	}
+	
+	public MyBehavior (LedgerBehavior lb)
+	{
+		super();
+		this.lb = lb;
+	}
 		
 	@Override
 	public void setUtils(MyAgentUtils utils)
@@ -33,6 +48,13 @@ public class IAGOBuildingBehavior extends IAGOCoreBehavior implements BehaviorPo
 	{
 		allocated = update;
 	}
+	
+	@Override
+	public void updateAdverseEvents (int change)
+	{
+		adverseEvents = Math.max(0, adverseEvents + change);
+	}
+	
 	
 	@Override
 	public Offer getAllocated ()
@@ -67,10 +89,12 @@ public class IAGOBuildingBehavior extends IAGOCoreBehavior implements BehaviorPo
 	@Override
 	public Offer getNextOffer(History history) 
 	{	
+			
 		//start from where we currently have accepted
 		Offer propose = new Offer(game.getNumberIssues());
 		for(int issue = 0; issue < game.getNumberIssues(); issue++)
 			propose.setItem(issue, allocated.getItem(issue));
+		
 		
 		// Assign ordering to the player based on perceived preferences. Ideally, they would be opposite the agent's (integrative)
 		ArrayList<Integer> playerPref = utils.getMinimaxOrdering(); 
@@ -103,6 +127,48 @@ public class IAGOBuildingBehavior extends IAGOCoreBehavior implements BehaviorPo
 				max = vhPref.get(i);
 			}
 		
+		
+		//is there ledger to work with?
+		if(lb == LedgerBehavior.NONE) //this agent doesn't care
+		{
+			//nothing
+		}
+		else if (utils.getVerbalLedger() < 0) //we have favors to cash!
+		{
+			//we will naively cash them immediately regardless of game importance
+			//take entire category
+			utils.modifyOfferLedger(-1);
+			propose.setItem(opponentFave, new int[] {allocated.getItem(opponentFave)[0] + free[opponentFave], 0, allocated.getItem(opponentFave)[2]});
+			return propose;	
+		}
+		else if (utils.getVerbalLedger() > 0) //we have favors to return!
+		{
+			if (lb == LedgerBehavior.BETRAYING)//this agent doesn't care
+			{
+				//nothing, so continue
+			}
+			else if(lb == LedgerBehavior.FAIR)//this agent returns an entire column!
+			{
+				//return entire category
+				utils.modifyOfferLedger(1);
+				propose.setItem(userFave, new int[] {allocated.getItem(userFave)[0], 0, allocated.getItem(userFave)[2] + free[userFave]});
+				return propose;
+			}
+			else //if (lb == LedgerBehavior.LIMITED)//this agent returns a single item.  woo hoo
+			{
+				//return single item
+				utils.modifyOfferLedger(1);
+				propose.setItem(userFave, new int[] {allocated.getItem(userFave)[0], free[userFave] - 1, allocated.getItem(userFave)[2] + 1});
+				return propose;
+			}
+		}
+		else //we have nothing special
+		{
+			//nothing, so continue
+		}
+
+		
+
 		if (userFave == -1 && opponentFave == -1) // We already have a full offer (no undecided items), try something different
 		{
 			//just repeat and keep allocated
@@ -111,11 +177,11 @@ public class IAGOBuildingBehavior extends IAGOCoreBehavior implements BehaviorPo
 		{
 			if(free[userFave] >= 2) // If there are more than two of that issue, propose an offer where the VH and player each get one more of that issue
 				propose.setItem(userFave, new int[] {allocated.getItem(userFave)[0] + 1, free[userFave] - 2, allocated.getItem(userFave)[2] + 1});
-			else // Otherwise just give the one item left to the player
+			else // Otherwise just give the one item left to us, the agent
 			{
-				if (utils.getMyRow() == 0) {
+				if (utils.getAdversaryRow() == 0) {
 					propose.setItem(userFave, new int[] {allocated.getItem(userFave)[0], free[userFave] - 1, allocated.getItem(userFave)[2] + 1});
-				} else if (utils.getMyRow() == 2) {
+				} else if (utils.getAdversaryRow() == 2) {
 					propose.setItem(userFave, new int[] {allocated.getItem(userFave)[0] + 1, free[userFave] - 1, allocated.getItem(userFave)[2]});
 				}
 			}
@@ -147,18 +213,12 @@ public class IAGOBuildingBehavior extends IAGOCoreBehavior implements BehaviorPo
 
 	@Override
 	public int getAcceptMargin() {
-		return game.getNumberIssues();
+		return Math.max(0, Math.min(game.getNumberIssues(), adverseEvents));//basic decaying will, starts with fair
 	}
 
 	@Override
 	public Offer getRejectOfferFollowup(History history) {
 		return null;
-	}
-
-	@Override
-	public void updateAdverseEvents(int change) {
-		return;
-		
 	}
 	
 

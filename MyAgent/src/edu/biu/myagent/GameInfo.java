@@ -9,7 +9,7 @@ public class GameInfo {
 	}
 
 	public enum PlayerCooperation {
-		COOPERATIVE, NEUTRAL, NOT_COOPERATIVE, LIER
+		COOPERATIVE, NEUTRAL, NOT_COOPERATIVE, LIAR, SUPER_LIAR
 	}
 
 	private static final int DEFAULT_POLITE_POINTS = 2;
@@ -17,6 +17,12 @@ public class GameInfo {
 	private static final float LIE_PERCENT_THRESHOLD = 0.9f;
 	private static final float PLAYER_PREFS_BONUS_PERCENT = 1.5f;
 	private static final float LIED_POINTS = -1000f;
+	private static final float COOPERATIVE_POINTS_THRESHOLD = 1.5f;
+	private static final float NEUTRAL_POINTS_THRESHOLD = 0;
+	private static final float VERY_POLITE_POINTS_THRESHOLD = 2;
+	private static final float POLIE_POINTS_THRESHOLD = 0;
+	private static final float NOT_POLITE_POINTS_THRESHOLD = -5;
+	private static final float GREAT_DEAL_PERCENT_THRESHOLD = 85;
 
 	private LinkedList<Preference> gamePlayerPreferences;
 	private LinkedList<Preference> gameAgentPreferences;
@@ -86,28 +92,28 @@ public class GameInfo {
 					(float) (getAgentPreferencesSize());
 		}
 
-		if(cooperationPoints >= 1.5)
+		if(cooperationPoints >= COOPERATIVE_POINTS_THRESHOLD)
 			return PlayerCooperation.COOPERATIVE;
 
-		if(cooperationPoints > 0)
+		if(cooperationPoints >= NEUTRAL_POINTS_THRESHOLD)
 			return PlayerCooperation.NEUTRAL;
 
 		if(cooperationPoints > LIED_POINTS)
 			return PlayerCooperation.NOT_COOPERATIVE;
 
-		return PlayerCooperation.LIER;
+		return PlayerCooperation.LIAR;
 	}
 
 	public PlayerBehavior behavior() {
 		int politePoints =  DEFAULT_POLITE_POINTS - numberOfGameAngryFaces - THREATS_EXTRA_NEGATIVE_PERCENT * numberOfGameThreats;
 
-		if(politePoints >= 2)
+		if(politePoints >= VERY_POLITE_POINTS_THRESHOLD)
 			return PlayerBehavior.VERY_POLITE;
 
-		if(politePoints >= 0)
+		if(politePoints >= POLIE_POINTS_THRESHOLD)
 			return PlayerBehavior.POLITE;
 
-		if(politePoints > -5)
+		if(politePoints > NOT_POLITE_POINTS_THRESHOLD)
 			return PlayerBehavior.NOT_POLITE;
 
 		return PlayerBehavior.RUDE;
@@ -116,12 +122,12 @@ public class GameInfo {
 	public boolean gotGreatDeal() {
 		float percentPoints = (float) (agentIssuesTotalPoints) / (float) (allIssuesTotalPoints);
 
-		return percentPoints >= 0.85f;
+		return percentPoints >= (GREAT_DEAL_PERCENT_THRESHOLD / 100f);
 	}
 
 	public static PlayerCooperation getTotalCooperationPoints(PlayerCooperation firstGameCooperation, PlayerCooperation secondGameCooperation) {
 		switch(firstGameCooperation) {
-		case LIER:
+		case LIAR:
 			return getTotalCooperationFirstLier(secondGameCooperation);
 		case NOT_COOPERATIVE:
 			return getTotalCooperationFirstNotCooperative(secondGameCooperation);
@@ -134,8 +140,8 @@ public class GameInfo {
 
 	private static PlayerCooperation getTotalCooperationFirstCooperative(PlayerCooperation secondGameCooperation) {
 		switch(secondGameCooperation) {
-		case LIER:
-			return PlayerCooperation.LIER;
+		case LIAR:
+			return PlayerCooperation.LIAR;
 		case NOT_COOPERATIVE:
 			return PlayerCooperation.NEUTRAL;
 		default:
@@ -145,8 +151,8 @@ public class GameInfo {
 
 	private static PlayerCooperation getTotalCooperationFirstNotCooperative(PlayerCooperation secondGameCooperation) {
 		switch(secondGameCooperation) {
-		case LIER:
-			return PlayerCooperation.LIER;
+		case LIAR:
+			return PlayerCooperation.LIAR;
 		case NOT_COOPERATIVE:
 			return PlayerCooperation.NOT_COOPERATIVE;
 		default:
@@ -156,8 +162,8 @@ public class GameInfo {
 
 	private static PlayerCooperation getTotalCooperationFirstLier(PlayerCooperation secondGameCooperation) {
 		switch(secondGameCooperation) {
-		case LIER:
-			return PlayerCooperation.LIER;
+		case LIAR:
+			return PlayerCooperation.SUPER_LIAR;
 		case NOT_COOPERATIVE:
 		case NEUTRAL:
 			return PlayerCooperation.NOT_COOPERATIVE;

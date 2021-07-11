@@ -1,4 +1,4 @@
-package edu.usc.ict.iago.agent;
+package edu.biu.myagent;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -14,7 +14,7 @@ import edu.usc.ict.iago.utils.Preference;
 import edu.usc.ict.iago.utils.ServletUtils;
 import edu.usc.ict.iago.utils.Preference.Relation;
 
-public class AgentUtilsExtension 
+public class MyAgentUtilsExtension 
 {
 	private GeneralVH agent;
 	private GameSpec game;
@@ -32,7 +32,7 @@ public class AgentUtilsExtension
 	 * Constructor for the AUE.
 	 * @param core The VH associated with this instance of AUE.
 	 */
-	public AgentUtilsExtension(GeneralVH core){
+	public MyAgentUtilsExtension(GeneralVH core){
 		agent = core;
 
 		if (core.getID() == History.USER_ID) 
