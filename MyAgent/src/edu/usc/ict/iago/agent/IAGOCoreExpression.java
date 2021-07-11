@@ -11,4 +11,6 @@ public abstract class IAGOCoreExpression implements ExpressionPolicy
 	public abstract String getUnfairEmotion();
 	
 	public abstract String getAngryEmotion();
+
+	public abstract String getNeutralEmotion();
 }

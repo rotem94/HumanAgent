@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import edu.biu.myagent.GameIssue;
 import edu.usc.ict.iago.utils.Event;
 import edu.usc.ict.iago.utils.GameSpec;
 import edu.usc.ict.iago.utils.GeneralVH;
@@ -59,34 +58,6 @@ public class AgentUtilsExtension
 
 		for (int i = 0; i < game.getNumberIssues(); i++)
 			previouslyOffered.add(false);
-	}
-
-	public LinkedList<GameIssue> getGameIssues() {
-		List<Integer> quantities = game.getIssueQuantities();
-		LinkedList<GameIssue>gameIssues = new LinkedList<GameIssue>();
-
-		for (int i = 0; i < game.getNumberIssues(); i++)
-		{
-			String s = game.getIssuePluralText().get(i);
-			int issuePoints = game.getSimplePoints(agent.getID()).get(s);
-
-			gameIssues.add(new GameIssue(issuePoints, quantities.get(i)));
-		}
-
-		return gameIssues;
-	}
-
-	public LinkedList<GameIssue> getAgentGameIssues(Offer offer) {
-		LinkedList<GameIssue>gameIssues = new LinkedList<GameIssue>();
-
-		for (int i = 0; i < game.getNumberIssues(); i++) {
-			int numItems = offer.getItem(i)[myRow];
-			int points = game.getSimplePoints(agent.getID()).get(game.getIssuePluralText().get(i));
-
-			gameIssues.add(new GameIssue(points, numItems));
-		}
-
-		return gameIssues;
 	}
 
 	/**

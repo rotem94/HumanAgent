@@ -36,4 +36,10 @@ public class IAGODefaultExpression extends IAGOCoreExpression implements Express
 		return null;
 	}
 
+	@Override
+	public String getNeutralEmotion() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

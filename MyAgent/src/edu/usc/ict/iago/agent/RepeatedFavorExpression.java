@@ -5,17 +5,17 @@ import edu.usc.ict.iago.utils.ExpressionPolicy;
 import edu.usc.ict.iago.utils.History;
 
 public class RepeatedFavorExpression extends IAGOCoreExpression implements ExpressionPolicy{
-	
+
 	public String getSemiFairEmotion()
 	{
 		return "happy";
 	}
-	
+
 	public String getFairEmotion()
 	{
 		return "happy";
 	}
-	
+
 	public String getUnfairEmotion()
 	{
 		return "sad";
@@ -24,7 +24,12 @@ public class RepeatedFavorExpression extends IAGOCoreExpression implements Expre
 	public String getAngryEmotion() {
 		return "angry";
 	}
-	
+
+
+	public String getNeutralEmotion() {
+		return "neutral";
+	}
+
 	@Override
 	public String getExpression(History history) 
 	{
@@ -46,56 +51,56 @@ public class RepeatedFavorExpression extends IAGOCoreExpression implements Expre
 			Event.SubClass type = last.getSubClass();
 			switch(type)
 			{
-				case BATNA_INFO:
-					return "happy";
-				case BATNA_REQUEST:
-					return null;
-				case CONFUSION:
-					return "sad";
-				case FAVOR_ACCEPT:
-					return "happy";
-				case FAVOR_REJECT:
-					return "sad";
-				case FAVOR_REQUEST:
-					return null;
-				case FAVOR_RETURN:
-					return "happy";
-				case GENERIC_NEG:
-					return "sad";
-				case GENERIC_POS:
-					return "happy";
-				case NONE:
-					return null;
-				case OFFER_ACCEPT:
-					return "happy";
-				case OFFER_REJECT:
-					return "sad";
-				case OFFER_REQUEST_NEG:
-					return "sad";
-				case OFFER_REQUEST_POS:
-					return null;
-				case PREF_INFO:
-					return "happy";
-				case PREF_REQUEST:
-					return null;
-				case PREF_SPECIFIC_REQUEST:
-					return null;
-				case PREF_WITHHOLD:
-					return "sad";
-				case THREAT_NEG:
-					return "sad";
-				case THREAT_POS:
-					return "sad";
-				case OFFER_PROPOSE:
-					return null;
-				case TIMING:
-					return null;
-				default:
-					return null;			
+			case BATNA_INFO:
+				return "happy";
+			case BATNA_REQUEST:
+				return null;
+			case CONFUSION:
+				return "sad";
+			case FAVOR_ACCEPT:
+				return "happy";
+			case FAVOR_REJECT:
+				return "sad";
+			case FAVOR_REQUEST:
+				return null;
+			case FAVOR_RETURN:
+				return "happy";
+			case GENERIC_NEG:
+				return "sad";
+			case GENERIC_POS:
+				return "happy";
+			case NONE:
+				return null;
+			case OFFER_ACCEPT:
+				return "happy";
+			case OFFER_REJECT:
+				return "sad";
+			case OFFER_REQUEST_NEG:
+				return "sad";
+			case OFFER_REQUEST_POS:
+				return null;
+			case PREF_INFO:
+				return "happy";
+			case PREF_REQUEST:
+				return null;
+			case PREF_SPECIFIC_REQUEST:
+				return null;
+			case PREF_WITHHOLD:
+				return "sad";
+			case THREAT_NEG:
+				return "sad";
+			case THREAT_POS:
+				return "sad";
+			case OFFER_PROPOSE:
+				return null;
+			case TIMING:
+				return null;
+			default:
+				return null;			
 			}
 		}
 		else
 			return null;
-		
+
 	}
 }

@@ -22,16 +22,19 @@ public class GameInfo {
 	private LinkedList<Preference> gameAgentPreferences;
 	private int numberOfGameThreats;
 	private int numberOfGameAngryFaces;
+	private int allIssuesTotalPoints;
+	private int agentIssuesTotalPoints;
+	private int agentOwePreferencesInGame;
 	private float gameLiesPercent;
-	private LinkedList<GameIssue> allIssues;
-	private LinkedList<GameIssue> agentIssues;
 
-	public GameInfo(LinkedList<GameIssue> allIssues, LinkedList<Preference> gamePlayerPreferences, LinkedList<Preference> gameAgentPreferences) {
+	public GameInfo(int allIssuesTotalPoints, LinkedList<Preference> gamePlayerPreferences, LinkedList<Preference> gameAgentPreferences) {
 		numberOfGameThreats = 0;
 		numberOfGameAngryFaces = 0;
+		agentIssuesTotalPoints = 0;
+		agentOwePreferencesInGame = 0;
 		gameLiesPercent = 0f;
 
-		this.allIssues = allIssues;
+		this.allIssuesTotalPoints = allIssuesTotalPoints;
 		this.gamePlayerPreferences = gamePlayerPreferences;
 		this.gameAgentPreferences = gameAgentPreferences;
 
@@ -57,16 +60,20 @@ public class GameInfo {
 		setGameLiesPercent(1f);
 	}
 
-	public void setAgentIssues(LinkedList<GameIssue> agentIssues) {
-		this.agentIssues = agentIssues;
-	}
-
 	public int getPlayerPreferencesSize() {
 		return gamePlayerPreferences.size();
 	}
 
 	public int getAgentPreferencesSize() {
-		return gameAgentPreferences.size();
+		return gameAgentPreferences.size() - agentOwePreferencesInGame;
+	}
+
+	public int getAgentIssuesTotalPoints() {
+		return agentIssuesTotalPoints;
+	}
+
+	public void setAgentIssuesTotalPoints(int agentIssuesTotalPoints) {
+		this.agentIssuesTotalPoints = agentIssuesTotalPoints;
 	}
 
 	public PlayerCooperation cooperative() {
@@ -74,8 +81,10 @@ public class GameInfo {
 
 		if(gameLiesPercent > LIE_PERCENT_THRESHOLD)
 			cooperationPoints = LIED_POINTS;
-		else 
-			cooperationPoints = (float) (getPlayerPreferencesSize() * PLAYER_PREFS_BONUS_PERCENT) - (float) (getAgentPreferencesSize());
+		else {
+			cooperationPoints = (float) (getPlayerPreferencesSize() * PLAYER_PREFS_BONUS_PERCENT) - 
+					(float) (getAgentPreferencesSize());
+		}
 
 		if(cooperationPoints >= 1.5)
 			return PlayerCooperation.COOPERATIVE;
@@ -102,6 +111,12 @@ public class GameInfo {
 			return PlayerBehavior.NOT_POLITE;
 
 		return PlayerBehavior.RUDE;
+	}
+
+	public boolean gotGreatDeal() {
+		float percentPoints = (float) (agentIssuesTotalPoints) / (float) (allIssuesTotalPoints);
+
+		return percentPoints >= 0.85f;
 	}
 
 	public static PlayerCooperation getTotalCooperationPoints(PlayerCooperation firstGameCooperation, PlayerCooperation secondGameCooperation) {
@@ -206,5 +221,9 @@ public class GameInfo {
 		default:
 			return PlayerBehavior.POLITE;
 		}
+	}
+
+	public void setAgentOwesPreferences(int agentOwePreferences) {
+		this.agentOwePreferencesInGame = agentOwePreferences;
 	}
 }
