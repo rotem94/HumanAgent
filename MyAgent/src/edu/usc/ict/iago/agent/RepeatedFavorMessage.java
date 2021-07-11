@@ -50,6 +50,8 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 
 	protected final String[] vhWaiting = {
 			"Hello? Are you still there?",
+			"?",
+			"Hello?",
 			"No rush, but are you going to send me an offer?",
 			"Can I do anything to help us reach a deal that's good for us both?",
 			"I'm sorry, but are you still there?",
@@ -116,15 +118,17 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 	}
 
 	public String getWaitingLang(History history, GameSpec game){
-		if(vhIdleQuestions.length != 0) {									//if the questions in this array haven't all been removed, pick another one to use
+		if(vhIdleQuestions.length != 0 && !utils.didPlayerLie()) {	//if the questions in this array haven't all been removed, pick another one to use
 			int rand = (int)(Math.random()*vhIdleQuestions.length);
 			String randQ = vhIdleQuestions[rand];
 			ArrayList<String> temp = new ArrayList<String>((List<String>) Arrays.asList(vhIdleQuestions));
 			temp.remove(rand);
 			Object[] temp2 = temp.toArray();
-			vhIdleQuestions = Arrays.copyOf(temp2, temp2.length, String[].class);		//remove questions from this array once used (will eventually be empty at which point P++ randomly picks from vhWaiting below)
+			vhIdleQuestions = Arrays.copyOf(temp2, temp2.length, String[].class);	//remove questions from this array once used (will eventually be empty at which point P++ randomly picks from vhWaiting below)
+			
 			return randQ;
 		}
+
 		return vhWaiting[(int)(Math.random()*vhWaiting.length)];
 	}
 
@@ -303,7 +307,7 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 				if (Math.abs(utils.myActualOfferValue(lastOffer.getOffer()) - avgPlayerValue) > game.getNumberIssues() * 2)
 				{
 					str =  "Ok, I understand.  I do wish we could come up with something that is a more even split though.";
-					if (best >= 0 && worst >= 0) 
+					if (!playerLied() && best >= 0 && worst >= 0) 
 					{
 						str += "  Isn't it true that you like " + game.getIssuePluralText().get(best) + " best and " + game.getIssuePluralText().get(worst) + " least?";
 						sc = Event.SubClass.PREF_REQUEST;
@@ -394,17 +398,26 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 		case PREF_REQUEST:
 		case PREF_SPECIFIC_REQUEST:	
 		case PREF_WITHHOLD:
-			/*if(p != null && !p.isQuery()) {
-				if(utils.getAgentCurrentGamePreferencesSize() >= utils.getPlayerPreferencesSize())
-					return null;
+			if(p != null && !p.isQuery()) {
+				if(utils.getCurrentGameAgentPrefsSize() >= utils.getPlayerPreferencesSize()) {
+					str = "Thanks for telling me about one of your preferences!";
+					sc = Event.SubClass.NONE;
+					break;
+				}
 			}
 			else {
-				if(utils.getTotalSentPreferences() > utils.playerTotalPreferencesSize()) {
+				if(playerLied()) {
+					str = "I don't think it best to reveal more of my intentions in the current game.";
+					sc = Event.SubClass.PREF_WITHHOLD;
+					break;
+				}
+				
+				if(utils.getCurrentGameAgentPrefsSize() > utils.getPlayerPreferencesSize()) {
 					str = "I don't think it best to reveal more of my intentions yet. Maybe if you did...";
 					sc = Event.SubClass.PREF_WITHHOLD;
 					break;
 				}
-			}*/
+			}
 
 			sc = Event.SubClass.PREF_INFO;
 			if (p == null && !isWithholding)
@@ -593,6 +606,10 @@ public class RepeatedFavorMessage extends IAGOCoreMessage implements MessagePoli
 		}
 		return resp; 
 
+	}
+
+	private boolean playerLied() {
+		return utils.didPlayerLie();
 	}
 
 	public Event getRandomPreference(GameSpec game) {

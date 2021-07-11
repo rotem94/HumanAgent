@@ -218,6 +218,7 @@ public abstract class MyCoreAgent extends GeneralVH
 
 		String message = "I just wanted to tell you, that if you'll stay for a third game, I'll owe you a favor. So, it will be worth for you to stay!";
 		Event advertiseEvent = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.NONE, message, (int) (1000*game.getMultiplier()));
+		advertiseEvent.setFlushable(false);
 
 		addEventWithTypingBefore(resp, advertiseEvent);
 	}
@@ -235,19 +236,34 @@ public abstract class MyCoreAgent extends GeneralVH
 		}
 
 		if (p != null && !p.isQuery()) {//a preference was expressed
-			if(!playerSentTruePreference(p, resp))
+			if(utils.didPlayerLie(currentGameCount)) {
+				handlePlayerLie(resp);
+				advertiseThirdGame(resp);
+
 				return resp;
+			}
+			else {
+				if(!playerSentTruePreference(p, resp)) {
+					advertiseThirdGame(resp);
+
+					return resp;
+				}
+			}
 		}
 
 		String expr = expression.getExpression(getHistory());
+		Event e0 = messages.getVerboseMessageResponse(getHistory(), game, e);
+
+		if(e0 != null && e0.getType() == Event.EventClass.SEND_MESSAGE && e0.getSubClass() == Event.SubClass.PREF_WITHHOLD)
+			expr = expression.getUnfairEmotion();
+
 		if (expr != null) 
 		{
-			Event e0 = new Event(this.getID(), Event.EventClass.SEND_EXPRESSION, expr, 2000, (int) (700*game.getMultiplier()));
-			addEventWithTypingBefore(resp, e0);
+			Event sendExpressionEvent = new Event(this.getID(), Event.EventClass.SEND_EXPRESSION, expr, 2000, (int) (700*game.getMultiplier()));
+			addEventWithTypingBefore(resp, sendExpressionEvent);
 		}
 
 
-		Event e0 = messages.getVerboseMessageResponse(getHistory(), game, e);
 		if (e0 != null && (e0.getType() == EventClass.OFFER_IN_PROGRESS || e0.getSubClass() == Event.SubClass.FAVOR_ACCEPT)) 
 		{
 			Event e2 = new Event(this.getID(), Event.EventClass.SEND_OFFER, behavior.getNextOffer(getHistory()), (int) (700*game.getMultiplier()));
@@ -378,7 +394,23 @@ public abstract class MyCoreAgent extends GeneralVH
 			}
 		}
 
+		advertiseThirdGame(resp);
+
 		return resp;
+	}
+
+	private void handlePlayerLie(LinkedList<Event> resp) {
+		String message = "You already lied to me in the current game about your preferences, I don't know if I should believe you now.";
+
+		Event sadExpression = getSadAgentEvent();
+		Event lieEvent = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.NONE, message, (int) (2000*game.getMultiplier()));
+
+		addEventWithTypingBefore(resp, sadExpression);
+		addEventWithTypingBefore(resp, lieEvent);
+	}
+
+	private Event getSadAgentEvent() {
+		return new Event(this.getID(), Event.EventClass.SEND_EXPRESSION, sadExpression(), 2000, (int) (700*game.getMultiplier()));
 	}
 
 	private boolean playerSentTruePreference(Preference p, LinkedList<Event> resp) {
@@ -532,13 +564,8 @@ public abstract class MyCoreAgent extends GeneralVH
 		}
 		else
 		{
-			String expr = expression.getUnfairEmotion();
-
-			if (expr != null) 
-			{
-				Event eExpr = new Event(this.getID(), Event.EventClass.SEND_EXPRESSION, expr, 2000, (int) (700*game.getMultiplier()));
-				addEventWithTypingBefore(resp, eExpr);
-			}
+			Event sadEvent = getSadAgentEvent();
+			addEventWithTypingBefore(resp, sadEvent);
 
 			Event e0 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.OFFER_REJECT, messages.getVHRejectLang(getHistory(), game), (int) (700*game.getMultiplier()));
 			//slightly alter the language
@@ -661,10 +688,12 @@ public abstract class MyCoreAgent extends GeneralVH
 		// At 90 second, computer agent will send prompt for user to talk about preferences
 		if (e.getMessage().equals("90") && this.getID() == History.OPPONENT_ID) 
 		{
-			String str = "By the way, will you tell me a little about your preferences?";
-			Event e1 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.PREF_REQUEST, str, (int) (1000*game.getMultiplier()));
-			e1.setFlushable(false);
-			addEventWithTypingBefore(resp, e1);
+			if(!utils.didPlayerLie(currentGameCount)) {
+				String str = "By the way, will you tell me a little about your preferences?";
+				Event e1 = new Event(this.getID(), Event.EventClass.SEND_MESSAGE, Event.SubClass.PREF_REQUEST, str, (int) (1000*game.getMultiplier()));
+				e1.setFlushable(false);
+				addEventWithTypingBefore(resp, e1);
+			}
 		}
 
 		return resp;
@@ -794,10 +823,32 @@ public abstract class MyCoreAgent extends GeneralVH
 	}
 
 	private void addEventWithTypingBefore(LinkedList<Event> resp, Event event) {
-		if(event != null && event.getType() != EventClass.OFFER_IN_PROGRESS)
-			resp.add(typingEvent);
+		if(event == null)
+			return;
 
-		resp.add(event);
+		Event lastEvent = getHistory().getHistory().getLast();
+		boolean isLastEventTyping = eventIsTypingEvent(lastEvent);
+		boolean isNewEventTyping = eventIsTypingEvent(event);
+
+		if(isLastEventTyping) {
+			if(isNewEventTyping)
+				return;
+
+			resp.add(event);
+		}
+		else {
+			if(!isNewEventTyping)
+				resp.add(typingEvent);
+
+			resp.add(event);
+		}
+	}
+
+	private boolean eventIsTypingEvent(Event event) {
+		boolean firstCondition = event.getType() == EventClass.OFFER_IN_PROGRESS;
+		boolean secondCondition = event.getType() == EventClass.SEND_MESSAGE && event.getSubClass() == SubClass.OFFER_PROPOSE;
+
+		return firstCondition || secondCondition;
 	}
 
 	public Event getRandomPreference() {
@@ -843,6 +894,10 @@ public abstract class MyCoreAgent extends GeneralVH
 
 	public String angryExpression() {
 		return expression.getAngryEmotion();
+	}
+
+	public String neutralExpression() {
+		return expression.getNeutralEmotion();
 	}
 
 	/**
