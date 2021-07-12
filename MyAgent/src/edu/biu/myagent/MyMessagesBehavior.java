@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import edu.biu.myagent.MyBehavior.LedgerBehavior;
-import edu.usc.ict.iago.agent.IAGOCoreMessage;
 import edu.usc.ict.iago.utils.Event;
 import edu.usc.ict.iago.utils.GameSpec;
 import edu.usc.ict.iago.utils.History;
@@ -124,7 +123,7 @@ public class MyMessagesBehavior extends IAGOCoreMessage implements MessagePolicy
 			temp.remove(rand);
 			Object[] temp2 = temp.toArray();
 			vhIdleQuestions = Arrays.copyOf(temp2, temp2.length, String[].class);	//remove questions from this array once used (will eventually be empty at which point P++ randomly picks from vhWaiting below)
-			
+
 			return randQ;
 		}
 
@@ -399,9 +398,11 @@ public class MyMessagesBehavior extends IAGOCoreMessage implements MessagePolicy
 		case PREF_WITHHOLD:
 			if(p != null && !p.isQuery()) {
 				if(utils.getCurrentGameAgentPrefsSize() >= utils.getPlayerPreferencesSize()) {
-					str = "Thanks for telling me about one of your preferences!";
-					sc = Event.SubClass.NONE;
-					break;
+					if(!utils.preferenceIsntValid(p)) {
+						str = "Thanks for telling me about one of your preferences!";
+						sc = Event.SubClass.NONE;
+						break;
+					}
 				}
 			}
 			else {
@@ -410,7 +411,7 @@ public class MyMessagesBehavior extends IAGOCoreMessage implements MessagePolicy
 					sc = Event.SubClass.PREF_WITHHOLD;
 					break;
 				}
-				
+
 				if(utils.getCurrentGameAgentPrefsSize() > utils.getPlayerPreferencesSize()) {
 					str = "I don't think it best to reveal more of my intentions yet. Maybe if you did...";
 					sc = Event.SubClass.PREF_WITHHOLD;
@@ -598,10 +599,14 @@ public class MyMessagesBehavior extends IAGOCoreMessage implements MessagePolicy
 		}
 
 		if (relation != null) {
-			if(resp.getSubClass() == SubClass.PREF_INFO)
-				utils.addAgentPreference(p);
+			Preference newPref = new Preference(issue1, issue2, relation, isQuery);
+			
+			if(resp.getSubClass() == SubClass.PREF_INFO) {
+				utils.addAgentPreference(newPref);
+				resp.setFlushable(false);
+			}
 
-			resp.encodePreferenceData(new Preference(issue1, issue2, relation, isQuery), gs);
+			resp.encodePreferenceData(newPref, gs);
 		}
 		return resp; 
 

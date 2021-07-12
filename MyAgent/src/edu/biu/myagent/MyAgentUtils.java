@@ -105,11 +105,21 @@ public class MyAgentUtils {
 	 */
 	public void addPref (Preference p, int gameNumber)
 	{
-		if(p == null || playerLiedInTheCurrentGame(gameNumber))
+		if(p == null || preferenceIsntValid(p) || playerLiedInTheCurrentGame(gameNumber))
 			return;
 
 		if(preferenceDoesntExist(currentPlayerPreferences, p))
 			currentPlayerPreferences.add(p);
+	}
+
+	public boolean preferenceIsntValid(Preference p) {
+		if(p.getIssue1() == -1)
+			return true;
+
+		if(p.getIssue2() == -1 && p.getRelation() != Relation.BEST && p.getRelation() != Relation.WORST)
+			return true;
+
+		return false;
 	}
 
 	private boolean playerLiedInTheCurrentGame(int gameNumber) {
@@ -478,7 +488,7 @@ public class MyAgentUtils {
 		switch(cooperation) {
 		case SUPER_LIAR:
 			thirdGamePlayerLies = true;
-			
+
 			startExpression = getAngryStartExpression();
 			message = "You lied to me about your preferences in the previous two games!" 
 					+ "as far as I concern, I don't owe you a favor for the third game anymore..";
@@ -522,7 +532,7 @@ public class MyAgentUtils {
 		switch(cooperation) {
 		case SUPER_LIAR:
 			thirdGamePlayerLies = true;
-			
+
 			startExpression = getAngryStartExpression();
 			message = "You lied to me about your preferences in the previous two games! You made it clear that you cannot be trusted.." 
 					+ "as far as I concern, I don't owe you a favor for the third game anymore..";
@@ -546,7 +556,7 @@ public class MyAgentUtils {
 
 	private String makeAFavor(boolean thirdGame) {
 		String message;
-		
+
 		if(thirdGame)
 			message = "I haven't forgotten my promise, I owe you a favor for this game.";
 		else
@@ -575,7 +585,7 @@ public class MyAgentUtils {
 		switch(cooperation) {
 		case SUPER_LIAR:
 			thirdGamePlayerLies = true;
-			
+
 			startExpression = getAngryStartExpression();
 			message = "You lied to me about your preferences in the previous two games!" 
 					+ "as far as I concern, I don't owe you a favor for the third game anymore..";
@@ -592,7 +602,7 @@ public class MyAgentUtils {
 		default:
 			startExpression = getHappyStartExpression();
 			message = "You were polite and I received a great deal from you, ";
-			
+
 			makeAFavor(thirdGame);
 		}
 
@@ -607,7 +617,7 @@ public class MyAgentUtils {
 		switch(cooperation) {
 		case SUPER_LIAR:
 			thirdGamePlayerLies = true;
-			
+
 			startExpression = getAngryStartExpression();
 			message = "You lied to me about your preferences in the previous two games!" 
 					+ "as far as I concern, I don't owe you a favor for the third game anymore..";
@@ -711,7 +721,7 @@ public class MyAgentUtils {
 		switch(cooperation) {
 		case SUPER_LIAR:
 			thirdGamePlayerLies = true;
-			
+
 			startExpression = getAngryStartExpression();
 			message = "You lied to me about your preferences in the previous two games!" 
 					+ "as far as I concern, I don't owe you a favor for the third game anymore..";
@@ -768,7 +778,7 @@ public class MyAgentUtils {
 		switch(cooperation) {
 		case SUPER_LIAR:
 			thirdGamePlayerLies = true;
-			
+
 			startExpression = getAngryStartExpression();
 			message = "You lied to me about your preferences in the previous two games!" 
 					+ "as far as I concern, I don't owe you a favor for the third game anymore..";
@@ -842,7 +852,7 @@ public class MyAgentUtils {
 		switch(cooperation) {
 		case SUPER_LIAR:
 			thirdGamePlayerLies = true;
-			
+
 			startExpression = getAngryStartExpression();
 			message = "You lied to me about your preferences in the previous two games!" 
 					+ "as far as I concern, I don't owe you a favor for the third game anymore..";
@@ -908,7 +918,7 @@ public class MyAgentUtils {
 		switch(cooperation) {
 		case SUPER_LIAR:
 			thirdGamePlayerLies = true;
-			
+
 			startExpression = getAngryStartExpression();
 			message = "You lied to me about your preferences in the previous two games!" 
 					+ "as far as I concern, I don't owe you a favor for the third game anymore..";
@@ -1000,7 +1010,7 @@ public class MyAgentUtils {
 	}
 
 	private boolean preferencesAreEqual(Preference preference, Preference p) {
-		if(preference.equals(p))
+		if(exactlyTheSame(preference, p))
 			return true;
 
 		switch(p.getRelation()) {
@@ -1018,6 +1028,16 @@ public class MyAgentUtils {
 		return false;
 	}
 
+	private boolean exactlyTheSame(Preference preference, Preference p) {
+		if(preference.getIssue1() != p.getIssue1())
+			return false;
+
+		if(preference.getIssue2() != p.getIssue2())
+			return false;
+
+		return preference.getRelation().equals(p.getRelation());
+	}
+
 	private boolean checkReverseEquality(Preference preference, Preference p, Relation relation) {
 		if(preference.getRelation() == relation) {
 			if(preference.getIssue1() == p.getIssue2() && preference.getIssue2() == p.getIssue1())
@@ -1028,7 +1048,7 @@ public class MyAgentUtils {
 	}
 
 	public void addAgentPreference(Preference preference) {
-		if(preference == null)
+		if(preference == null || preferenceIsntValid(preference))
 			return;
 
 		if(preferenceDoesntExist(currentAgentPreferences, preference))

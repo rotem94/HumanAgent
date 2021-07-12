@@ -1,7 +1,7 @@
 package edu.biu.myagent;
 
 import java.util.ArrayList;
-import edu.usc.ict.iago.agent.IAGOCoreBehavior;
+
 import edu.usc.ict.iago.utils.BehaviorPolicy;
 import edu.usc.ict.iago.utils.GameSpec;
 import edu.usc.ict.iago.utils.History;

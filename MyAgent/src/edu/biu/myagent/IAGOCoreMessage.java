@@ -1,9 +1,8 @@
-package edu.usc.ict.iago.agent;
+package edu.biu.myagent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import edu.biu.myagent.MyAgentUtils;
 import edu.usc.ict.iago.utils.Event;
 import edu.usc.ict.iago.utils.GameSpec;
 import edu.usc.ict.iago.utils.History;

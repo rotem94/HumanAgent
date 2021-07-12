@@ -1,6 +1,5 @@
 package edu.biu.myagent;
 
-import edu.usc.ict.iago.agent.IAGOCoreExpression;
 import edu.usc.ict.iago.utils.Event;
 import edu.usc.ict.iago.utils.ExpressionPolicy;
 import edu.usc.ict.iago.utils.History;

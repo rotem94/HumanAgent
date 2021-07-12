@@ -1,4 +1,4 @@
-package edu.usc.ict.iago.agent;
+package edu.biu.myagent;
 
 import edu.usc.ict.iago.utils.ExpressionPolicy;
 

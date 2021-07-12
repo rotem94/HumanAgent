@@ -1,6 +1,5 @@
-package edu.usc.ict.iago.agent;
+package edu.biu.myagent;
 
-import edu.biu.myagent.MyAgentUtils;
 import edu.usc.ict.iago.utils.BehaviorPolicy;
 import edu.usc.ict.iago.utils.History;
 import edu.usc.ict.iago.utils.Offer;

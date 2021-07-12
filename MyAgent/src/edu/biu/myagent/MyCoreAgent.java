@@ -2,10 +2,7 @@ package edu.biu.myagent;
 
 import java.util.LinkedList;
 import javax.websocket.Session;
-import edu.usc.ict.iago.agent.IAGOCoreBehavior;
-import edu.usc.ict.iago.agent.IAGOCoreExpression;
-import edu.usc.ict.iago.agent.IAGOCoreMessage;
-import edu.usc.ict.iago.agent.IAGOCompetitiveBehavior;
+
 import edu.usc.ict.iago.utils.Event;
 import edu.usc.ict.iago.utils.GameSpec;
 import edu.usc.ict.iago.utils.GeneralVH;
