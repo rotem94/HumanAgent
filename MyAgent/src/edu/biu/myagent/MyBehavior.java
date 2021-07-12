@@ -1,4 +1,4 @@
-package edu.usc.ict.iago.agent;
+package edu.biu.myagent;
 
 import java.util.ArrayList;
 
@@ -7,9 +7,9 @@ import edu.usc.ict.iago.utils.GameSpec;
 import edu.usc.ict.iago.utils.History;
 import edu.usc.ict.iago.utils.Offer;
 
-public class RepeatedFavorBehavior extends IAGOCoreBehavior implements BehaviorPolicy {
+public class MyBehavior extends IAGOCoreBehavior implements BehaviorPolicy {
 		
-	private AgentUtilsExtension utils;
+	private MyAgentUtils utils;
 	private GameSpec game;	
 	private Offer allocated;
 	private LedgerBehavior lb = LedgerBehavior.NONE;
@@ -23,14 +23,14 @@ public class RepeatedFavorBehavior extends IAGOCoreBehavior implements BehaviorP
 		NONE;
 	}
 	
-	public RepeatedFavorBehavior (LedgerBehavior lb)
+	public MyBehavior (LedgerBehavior lb)
 	{
 		super();
 		this.lb = lb;
 	}
 		
 	@Override
-	protected void setUtils(AgentUtilsExtension utils)
+	public void setUtils(MyAgentUtils utils)
 	{
 		this.utils = utils;
 		
@@ -44,32 +44,32 @@ public class RepeatedFavorBehavior extends IAGOCoreBehavior implements BehaviorP
 	}
 	
 	@Override
-	protected void updateAllocated (Offer update)
+	public void updateAllocated (Offer update)
 	{
 		allocated = update;
 	}
 	
 	@Override
-	protected void updateAdverseEvents (int change)
+	public void updateAdverseEvents (int change)
 	{
 		adverseEvents = Math.max(0, adverseEvents + change);
 	}
 	
 	
 	@Override
-	protected Offer getAllocated ()
+	public Offer getAllocated ()
 	{
 		return allocated;
 	}
 	
 	@Override
-	protected Offer getConceded ()
+	public Offer getConceded ()
 	{
 		return allocated;
 	}
 	
 	@Override
-	protected Offer getFinalOffer(History history)
+	public Offer getFinalOffer(History history)
 	{
 		Offer propose = new Offer(game.getNumberIssues());
 		int totalFree = 0;
@@ -179,9 +179,9 @@ public class RepeatedFavorBehavior extends IAGOCoreBehavior implements BehaviorP
 				propose.setItem(userFave, new int[] {allocated.getItem(userFave)[0] + 1, free[userFave] - 2, allocated.getItem(userFave)[2] + 1});
 			else // Otherwise just give the one item left to us, the agent
 			{
-				if (utils.adversaryRow == 0) {
+				if (utils.getAdversaryRow() == 0) {
 					propose.setItem(userFave, new int[] {allocated.getItem(userFave)[0], free[userFave] - 1, allocated.getItem(userFave)[2] + 1});
-				} else if (utils.adversaryRow == 2) {
+				} else if (utils.getAdversaryRow() == 2) {
 					propose.setItem(userFave, new int[] {allocated.getItem(userFave)[0] + 1, free[userFave] - 1, allocated.getItem(userFave)[2]});
 				}
 			}
@@ -197,27 +197,27 @@ public class RepeatedFavorBehavior extends IAGOCoreBehavior implements BehaviorP
 	}
 
 	@Override
-	protected Offer getTimingOffer(History history) {
+	public Offer getTimingOffer(History history) {
 		return null;
 	}
 
 	@Override
-	protected Offer getAcceptOfferFollowup(History history) {
+	public Offer getAcceptOfferFollowup(History history) {
 		return null;
 	}
 	
 	@Override
-	protected Offer getFirstOffer(History history) {
+	public Offer getFirstOffer(History history) {
 		return null;
 	}
 
 	@Override
-	protected int getAcceptMargin() {
+	public int getAcceptMargin() {
 		return Math.max(0, Math.min(game.getNumberIssues(), adverseEvents));//basic decaying will, starts with fair
 	}
 
 	@Override
-	protected Offer getRejectOfferFollowup(History history) {
+	public Offer getRejectOfferFollowup(History history) {
 		return null;
 	}
 	

@@ -1,12 +1,12 @@
-package edu.usc.ict.iago.agent;
+package edu.biu.myagent;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
 import edu.usc.ict.iago.utils.Event;
 import edu.usc.ict.iago.utils.GameSpec;
+import edu.usc.ict.iago.utils.GeneralVH;
 import edu.usc.ict.iago.utils.History;
 import edu.usc.ict.iago.utils.MathUtils;
 import edu.usc.ict.iago.utils.Offer;
@@ -14,120 +14,102 @@ import edu.usc.ict.iago.utils.Preference;
 import edu.usc.ict.iago.utils.ServletUtils;
 import edu.usc.ict.iago.utils.Preference.Relation;
 
-class AgentUtilsExtension 
+public class MyAgentUtilsExtension 
 {
-	private IAGOCoreVH agent;
+	private GeneralVH agent;
 	private GameSpec game;
 	private ArrayList<ArrayList<Integer>> orderings = new ArrayList<ArrayList<Integer>>();
+	private LinkedList<Preference> currentPlayerPreferences;
 	private int[][] permutations;
-	private LinkedList<Preference> preferences = new LinkedList<Preference>();
 	public int adversaryBATNA = -1;
 	public int myPresentedBATNA = -1;
-	public final double LIE_THRESHOLD = 0.6; 	
 	protected ArrayList<Boolean>  previouslyOffered = new ArrayList<Boolean>();
-	public boolean competitive = false;
+	private boolean isFixedPie;
 	public int myRow;
 	public int adversaryRow;
-	private boolean isFixedPie = false;
 
 	/**
 	 * Constructor for the AUE.
 	 * @param core The VH associated with this instance of AUE.
 	 */
-	AgentUtilsExtension(IAGOCoreVH core){
-		this.agent = core;
-		
-		if (this.agent.getID() == History.USER_ID) 
+	public MyAgentUtilsExtension(GeneralVH core){
+		agent = core;
+
+		if (core.getID() == History.USER_ID) 
 		{
 			myRow = 2;
 			adversaryRow = 0;
-		} else if (this.agent.getID() == History.OPPONENT_ID) 
+		} else if (core.getID() == History.OPPONENT_ID) 
 		{
 			myRow = 0;
 			adversaryRow = 2;
 		}
 	}
-	
+
 	/**
 	 * Configures initial parameters for the given game.
 	 * @param game the game being played.
 	 */
-	protected void configureGame(GameSpec game)
+	public void configureGame(GameSpec game)
 	{
 		this.game = game;
+
 		permutations = MathUtils.getPermutations(game.getNumberIssues(), 1);//offset by 1, so we will be 1-indexed
+
 		for (int i = 0; i < game.getNumberIssues(); i++)
 			previouslyOffered.add(false);
 	}
-	
+
 	/**
 	 * Sets the agent belief for when multiple opponent orderings are equally likely.  When true, it assumes it has the same preferences.  When false, it does not.
 	 * @param fixedpie true if fixed pie belief is in effect, false otherwise (if method is not called, defaults to false)
 	 */
-	protected void setAgentBelief(boolean fixedpie)
+	public void setAgentBelief(boolean fixedpie)
 	{
 		isFixedPie = fixedpie;
 	}
-	
+
 	/**
 	 * returns the GameSpec being used in the current game.
 	 * @return the GameSpec currently being played.
 	 */
-	protected GameSpec getSpec()
+	public GameSpec getSpec()
 	{
 		return game;
 	}
-	
-	/**
-	 * Adds the given preference to the list of preferences.
-	 * @param p the preference to add
-	 */
-	protected void addPref (Preference p)
-	{
-		preferences.add(p);
-	}
-	
-	/**
-	 * Removes the 0th element in the preferences queue.
-	 * @return the preference removed, or throws IndexOutOfBoundException 
-	 */
-	protected Preference dequeuePref()
-	{
-		return preferences.remove(0);
-	}
-	
+
 	/**
 	 * Returns the value of an offer with respect to the caller. 
 	 * @param o the offer
 	 * @return the total value (how many points the agent will get)
 	 */
-	protected int myActualOfferValue(Offer o) 
+	public int myActualOfferValue(Offer o) 
 	{
 		int ans = 0;
 		for (int num = 0; num < game.getNumberIssues(); num++)
 			ans += o.getItem(num)[myRow] * game.getSimplePoints(agent.getID()).get(game.getIssuePluralText().get(num));
 		return ans;
 	}
-	
+
 	/**
 	 * Returns the VH value of an ordering (of preferences?).
 	 * @param o the ordering
 	 * @return the total value
 	 */
-	protected int myActualOrderValue(ArrayList<Integer> o) 
+	public int myActualOrderValue(ArrayList<Integer> o) 
 	{
 		int ans = 0;
 		for (int num = 0; num < game.getNumberIssues(); num++)
 			ans += o.get(num) * game.getSimplePoints(agent.getID()).get(game.getIssuePluralText().get(num));
 		return ans;
 	}
-	
+
 	/**
 	 * Check to see if the offer is a full offer.
 	 * @param o the offer
 	 * @return is full offer
 	 */
-	protected boolean isFullOffer(Offer o)
+	public boolean isFullOffer(Offer o)
 	{
 		boolean ans = true;
 		for (int num = 0; num < game.getNumberIssues(); num++)
@@ -140,14 +122,14 @@ class AgentUtilsExtension
 	 * Returns the normalized ordering of VH preferences (e.g., a point value of {3, 7, 2} would return {2, 1, 3}), with 1 being the highest
 	 * @return an ArrayList of preferences
 	 */
-	protected ArrayList<Integer> getMyOrdering() 
+	public ArrayList<Integer> getMyOrdering() 
 	{
 		int rating = 1;
 		ArrayList<Integer> ans = new ArrayList<Integer>(game.getNumberIssues());
 		ArrayList<Integer> sortedIndices = new ArrayList<Integer>(game.getNumberIssues());
 		for(int init = 0; init < game.getNumberIssues(); init++)
 			ans.add(0);
-		
+
 		for (int i = 0; i < game.getNumberIssues(); i++)
 		{
 			int max = 0;
@@ -168,52 +150,52 @@ class AgentUtilsExtension
 		}
 		return ans;
 	}
-	
+
 	/**
 	 * Returns the expected value for this agent's adversary on an offer for a given ordering of preferences.
 	 * @param o the offer
 	 * @param ordering the ordering
 	 * @return the total value
 	 */
-	protected int adversaryValue(Offer o, ArrayList<Integer> ordering) 
+	public int adversaryValue(Offer o, ArrayList<Integer> ordering) 
 	{
 		int ans = 0;
 		for (int num = 0; num < game.getNumberIssues(); num++)
 			ans += o.getItem(num)[adversaryRow] * (game.getNumberIssues() - ordering.get(num) + 1);
 		return ans;
 	}
-	
+
 	/**
 	 * Returns the maximum possible value for an adversary on an offer for all current orderings of preferences.
 	 * @param o the offer
 	 * @return the total value
 	 */
-	protected int adversaryValueMax(Offer o)
+	public int adversaryValueMax(Offer o)
 	{
 		int max = 0;
 		for (ArrayList<Integer> order : orderings)
 			max = Math.max(max,  adversaryValue(o, order));
 		return max;
 	}
-	
+
 	/**
 	 * Returns the minimum possible value for an adversary on an offer for all current orderings of preferences.
 	 * @param o the offer
 	 * @return the total value
 	 */
-	protected int adversaryValueMin(Offer o)
+	public int adversaryValueMin(Offer o)
 	{
 		int min = 0;
 		for (ArrayList<Integer> order : orderings)
 			min = Math.min(min,  adversaryValue(o, order));
 		return min;
 	}
-	
+
 	/***
 	 * Finds the adversary's highest ranked item in the most ideal ordering
 	 * @return index of the best item (for opposing agent)
 	 */
-	protected int findAdversaryIdealBest()
+	public int findAdversaryIdealBest()
 	{
 		ArrayList<Integer> order = getMinimaxOrdering();
 		for (int i = 0; i < order.size(); i++)
@@ -228,7 +210,7 @@ class AgentUtilsExtension
 	 * Finds the adversary's second highest ranked item in the most ideal ordering
 	 * @return index of the second best item (for opposing agent)
 	 */
-	protected int findAdversaryIdealSecondBest()
+	public int findAdversaryIdealSecondBest()
 	{
 		ArrayList<Integer> order = getMinimaxOrdering();
 		for (int i = 0; i < order.size(); i++)
@@ -243,7 +225,7 @@ class AgentUtilsExtension
 	 * Finds the adversary's lowest ranked item in the most ideal ordering
 	 * @return index of the worst item (for opposing agent)
 	 */
-	protected int findAdversaryIdealWorst(GameSpec game)
+	public int findAdversaryIdealWorst(GameSpec game)
 	{
 		ArrayList<Integer> order = getMinimaxOrdering();
 		for (int i = 0; i < order.size(); i++)
@@ -253,14 +235,14 @@ class AgentUtilsExtension
 		}
 		return -1;
 	}
-	
+
 	/**
 	 * Returns the last event of type type, or null if nothing found.
 	 * @param history the history to search
 	 * @param type the type of EventClass to search for
 	 * @return the event found, or null
 	 */
-	protected Event lastEvent(LinkedList<Event> history, Event.EventClass type)
+	public Event lastEvent(LinkedList<Event> history, Event.EventClass type)
 	{
 		for (int i = history.size() - 1; i > 0; i--)
 		{
@@ -269,14 +251,14 @@ class AgentUtilsExtension
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Returns the last event of type type that was received, or null if nothing found.
 	 * @param history the history to search
 	 * @param type the type of EventClass to search for
 	 * @return the event found, or null
 	 */
-	protected Event lastEventReceived(LinkedList<Event> history, Event.EventClass type)
+	public Event lastEventReceived(LinkedList<Event> history, Event.EventClass type)
 	{
 		for (int i = history.size() - 1; i > 0; i--)
 		{
@@ -287,14 +269,14 @@ class AgentUtilsExtension
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Returns the second to last event of type type, or null if nothing found.
 	 * @param history the history to search
 	 * @param type the type of EventClass to search for
 	 * @return the event found, or null
 	 */
-	protected Event secondLastEvent(LinkedList<Event> history, Event.EventClass type)
+	public Event secondLastEvent(LinkedList<Event> history, Event.EventClass type)
 	{
 		boolean foundFirst = false;
 		for (int i = history.size() - 1; i > 0; i--)
@@ -309,12 +291,13 @@ class AgentUtilsExtension
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Eliminates invalid orderings by looking at preferences, the oldest ones first.
+	 * @param preferences 
 	 * @return true if there are no valid orderings, false otherwise
 	 */
-	protected boolean reconcileContradictions()
+	public boolean reconcileContradictions()
 	{
 		orderings = new ArrayList<ArrayList<Integer>>();
 		for (int i = 0; i < permutations.length; i++)
@@ -326,8 +309,8 @@ class AgentUtilsExtension
 			}
 			orderings.add(a); 
 		}
-		
-		for (Preference pref: preferences)
+
+		for (Preference pref: currentPlayerPreferences)
 		{
 			//ServletUtils.log(pref.toString(), ServletUtils.DebugLevels.DEBUG);
 			Relation r = pref.getRelation();
@@ -392,21 +375,20 @@ class AgentUtilsExtension
 						toRemove.add(o);
 				}
 			}
-			
+
 			for(ArrayList<Integer> al : toRemove)
 				orderings.remove(al);
-			
+
 			//ServletUtils.log(orderings.toString(), ServletUtils.DebugLevels.DEBUG);
 		}
 		//ServletUtils.log(orderings.toString(), ServletUtils.DebugLevels.DEBUG);
-		
-		if(orderings.size() == 0)
-		{
+
+		if(orderings.size() == 0)	
 			return true;
-		}
+
 		return false;
 	}
-	
+
 	/**
 	 * Finds the BATNA of an agent, takes into consideration whether it's lying or not
 	 * @param game
@@ -423,12 +405,12 @@ class AgentUtilsExtension
 		}
 		return game.getBATNA(agent.getID());
 	}
-		
+
 	/**
 	 * Finds the ordering among possible orderings that is most/least different than the VH's ordering, based on the value of isFixedPie (set by separate method).
 	 * @return the chosen ordering.
 	 */
-	protected ArrayList<Integer> getMinimaxOrdering()
+	public ArrayList<Integer> getMinimaxOrdering()
 	{
 		boolean reversed = isFixedPie;
 		int valueHeuristic = 0;
@@ -462,7 +444,7 @@ class AgentUtilsExtension
 		}
 		return ans;
 	}
-	
+
 	/***
 	 * Finds the maximum amount of total points to be had in a certain game (i.e., agent's score if they received every item).
 	 * @return max possible points
@@ -478,7 +460,7 @@ class AgentUtilsExtension
 		}
 		return totalPoints;
 	}
-	
+
 	/**
 	 * determines if a pair of given BATNA's are in conflict, i.e. an offer doesn't exist to satisfy both BATNAs.
 	 * @param agentBATNA		can be either the true BATNA, or the presented BATNA, depending on the circumstances
@@ -489,19 +471,20 @@ class AgentUtilsExtension
 	{
 		return agentBATNA + adversaryBATNA > getMaxPossiblePoints();
 	}
-	
+
 	/**
 	 * determines if a pair of given BATNA's are in conflict, i.e. an offer doesn't exist to satisfy both BATNAs.
 	 * If the BATNAs conflict, it returns a decreased value for the passed in BATNA.
 	 * @param vhPresentedBATNA			can be either the true BATNA, or the presented BATNA, depending on the circumstances
+	 * @param isCompetitive 
 	 * @return an updated BATNA for the VH, possibly lower, if the opponent and VH BATNAs conflict. Always at least the actual VH BATNA.
 	 */
-	public int lowerBATNA(int vhPresentedBATNA) 
+	public int lowerBATNA(int vhPresentedBATNA, boolean isCompetitive) 
 	{
 		if (conflictBATNA(vhPresentedBATNA, adversaryBATNA))
 		{
 			// If agent is competitive but they are not getting more than 60% of the joint value
-			if (vhPresentedBATNA / (vhPresentedBATNA + adversaryBATNA) < 0.6 && competitive)
+			if (vhPresentedBATNA / (vhPresentedBATNA + adversaryBATNA) < 0.6 && isCompetitive)
 			{
 				int curBATNA = vhPresentedBATNA;
 				double newBATNA =  Math.max(game.getBATNA(agent.getID()), curBATNA - game.getBATNA(agent.getID())); 
@@ -521,7 +504,7 @@ class AgentUtilsExtension
 	 * @param o an offer to look at
 	 * @return the predicted value of the offer to the adversary.
 	 */
-	protected int getAdversaryValue(Offer o) 
+	public int getAdversaryValue(Offer o) 
 	{
 		ServletUtils.log("Minimax ordering: " + getMinimaxOrdering() , ServletUtils.DebugLevels.DEBUG);
 		return adversaryValue(o, getMinimaxOrdering());
@@ -535,14 +518,14 @@ class AgentUtilsExtension
 	{
 		return agent.getID();
 	}
-	
+
 	/***
 	 * Finds the position on the board (1 through num issues) of an item with a particular ranking for current agent
 	 * @param game
 	 * @param num the ranking of the item within an ordering (i.e., 1 means best, 2 means second best, etc.)
 	 * @return the index of the item
 	 */
-	int findMyItemIndex(GameSpec game, int num) 
+	public int findMyItemIndex(GameSpec game, int num) 
 	{
 		ArrayList<Integer> order = getMyOrdering();
 		for (int i = 0; i < order.size(); i++) 
@@ -554,14 +537,14 @@ class AgentUtilsExtension
 		}
 		return -1;
 	}
-	
+
 	/***
 	 * Finds the position on the board (1 through num issues) of an item with a particular ranking for the agent's adversary.
 	 * @param game
 	 * @param num the ranking of the item within an ordering (i.e., 1 means best, 2 means second best, etc.)
 	 * @return the index of the item
 	 */
-	int findAdversaryItemIndex(GameSpec game, int num) 
+	public int findAdversaryItemIndex(GameSpec game, int num) 
 	{
 		for (ArrayList<Integer> order: orderings)
 		{
@@ -573,14 +556,14 @@ class AgentUtilsExtension
 		}
 		return -1;
 	}
-	
+
 	/**
 	 * Finds the name of an item that's ranked a certain way by the agent.
 	 * @param order The rank of the item.
 	 * @param game The GameSpec being used.
 	 * @return the name of the item the agent ranks according to the given order.
 	 */
-	String findMyItem(int order, GameSpec game)
+	public String findMyItem(int order, GameSpec game)
 	{
 		if(order <= 0 || order > game.getNumberIssues())
 			throw new IndexOutOfBoundsException("Index out bounds on VH Preference!");
@@ -594,12 +577,12 @@ class AgentUtilsExtension
 		}
 		return null;
 	}
-	
+
 	/***
 	 * Finds a random, accurate preference
 	 * @return random preference
 	 */
-	Preference randomPref() 
+	public Preference randomPref() 
 	{
 		int issue1 = (int)( Math.random()* (getSpec().getNumberIssues()));
 		int issue2 = (int)( Math.random()* (getSpec().getNumberIssues()));
@@ -617,69 +600,26 @@ class AgentUtilsExtension
 		Preference p = new Preference(issue1, issue2, r, false);
 		return p;
 	}
-	
+
 	/**
 	 * Determines if there is a "particularly" valuable item this time around.
 	 * @return a yes or no answer to that question
 	 */
-	protected boolean isImportantGame()
+	public boolean isImportantGame()
 	{
-		
+
 		double RATIO = 1.5;
 		double calcRatio = ((double)game.getSimpleOpponentPoints().get(this.findMyItem(1, game)))/((double)game.getSimpleOpponentPoints().get(this.findMyItem(2, game)));
 		ServletUtils.log("Calculated value ratio was: " + calcRatio, ServletUtils.DebugLevels.DEBUG);
-		
+
 		return calcRatio > RATIO;
 	}
-	
-	/**
-	 * Returns a simple int representing the internal "ledger" of favors done for the agent.  Can be negative.  Persists across games.
-	 * @return the ledger
-	 */
-	protected int getLedger()
-	{
-		return this.agent.getLedger();
-	}
-	
-	/**
-	 * Returns a simple int representing the internal "ledger" of favors done for the agent, including all pending values.  Can be negative.  Does not persist across games.
-	 * @return the ledger
-	 */
-	protected int getTotalLedger()
-	{
-		return this.agent.getTotalLedger();
-	}
-	
-	/**
-	 * Returns a simple int representing the potential "ledger" of favors verbally agreed to.  Can be negative.  Does not persist across games.
-	 * @return the ledger
-	 */
-	protected int getVerbalLedger()
-	{
-		return this.agent.getVerbalLedger();
-	}
-	
-	/**
-	 * Allows you to modify the agent's internal "ledger" of favors done for it.  
-	 * @param increment value (negative ok)
-	 */
-	protected void modifyVerbalLedger(int increment)
-	{
-		this.agent.modifyVerbalLedger(increment);
-	}
-	
-	/**
-	 * Allows you to modify the agent's internal "ledger" of favors done for it.  
-	 * @param increment value (negative ok)
-	 */
-	protected void modifyOfferLedger(int increment)
-	{
-		this.agent.modifyOfferLedger(increment);
+
+	public GameSpec getGame() {
+		return game;
 	}
 
-
-
+	public void setPlayerPreferences(LinkedList<Preference> currentPlayerPreferences) {
+		this.currentPlayerPreferences = currentPlayerPreferences;
+	}
 }
-
-
-

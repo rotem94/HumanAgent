@@ -1,4 +1,4 @@
-package edu.usc.ict.iago.agent;
+package edu.biu.myagent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,20 +15,20 @@ public abstract class IAGOCoreMessage implements MessagePolicy
 
 	public abstract void updateOrderings (ArrayList<ArrayList<Integer>> orderings);
 
-	protected abstract String getEndOfTimeResponse();
+	public abstract String getEndOfTimeResponse();
 
-	protected abstract String getSemiFairResponse();
+	public abstract String getSemiFairResponse();
 	
-	protected String getVHEqualLang()
+	public String getVHEqualLang()
 	{
 		return "That deal seems about the same as what we had before...";
 	}
 
-	protected abstract String getContradictionResponse(String drop);
+	public abstract String getContradictionResponse(String drop);
 
-	protected abstract void setUtils(AgentUtilsExtension utils);
+	public abstract void setUtils(MyAgentUtils utils);
 
-	protected boolean getLying(GameSpec game)
+	public boolean getLying(GameSpec game)
 	{
 		return false;
 	}
@@ -38,7 +38,7 @@ public abstract class IAGOCoreMessage implements MessagePolicy
 		return "Is this better for you?";
 	}
 
-	protected String getProposalLangFirst()
+	public String getProposalLangFirst()
 	{
 		return "How's this to start?";
 	}
@@ -65,7 +65,7 @@ public abstract class IAGOCoreMessage implements MessagePolicy
 	 * @return an english preference phrase
 	 * TODO will be replaced in IAGO 3.0 with the language overhaul
 	 */
-	protected static String prefToEnglish(Preference preference, GameSpec game)
+	public static String prefToEnglish(Preference preference, GameSpec game)
 	{
 		String ans = "";
 		if (preference.isQuery())
@@ -109,7 +109,7 @@ public abstract class IAGOCoreMessage implements MessagePolicy
 		return ans;
 	}
 
-	protected Event getFavorBehavior(History history, GameSpec game, Event e)
+	public Event getFavorBehavior(History history, GameSpec game, Event e)
 	{
 		return null;
 	}
@@ -118,5 +118,7 @@ public abstract class IAGOCoreMessage implements MessagePolicy
 	{
 		return "...";
 	}
+
+	public abstract Event getRandomPreference(GameSpec game);
 
 }
